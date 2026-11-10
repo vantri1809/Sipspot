@@ -44,6 +44,8 @@
 
       const groups = Object.create(null);
       let userMarker = null;
+      let userAccuracy = null;
+      let locateButton = null;
 
       function clusterIcon(kind) {
         return function (cluster) {
@@ -233,22 +235,95 @@
           }
           return true;
         },
-        addUserMarker: function (lat, lon, popupHtml) {
-          if (userMarker) map.removeLayer(userMarker);
-          userMarker = L.circleMarker([lat, lon], {
-            radius: 8,
-            color: "#084f4a",
-            fillColor: "#2EC4B6",
-            fillOpacity: 0.9,
-            weight: 2
-          }).addTo(map);
-          if (popupHtml) userMarker.bindPopup(popupHtml);
+        addUserMarker: function (lat, lon, popupHtml, accuracy) {
+          const latlng = L.latLng(lat, lon);
+          const accRaw = Number(accuracy);
+          const acc = Number.isFinite(accRaw) && accRaw > 0 ? accRaw : 30;
+          if (userAccuracy) {
+            userAccuracy.setLatLng(latlng);
+            userAccuracy.setRadius(acc);
+          } else {
+            userAccuracy = L.circle(latlng, {
+              radius: acc,
+              color: "#1E88E5",
+              weight: 1,
+              opacity: 0.35,
+              fillColor: "#1E88E5",
+              fillOpacity: 0.15,
+              interactive: false,
+              className: "sipspot-accuracy",
+              pane: "overlayPane"
+            }).addTo(map);
+          }
+          if (userMarker) {
+            userMarker.setLatLng(latlng);
+          } else {
+            userMarker = L.marker(latlng, {
+              icon: L.divIcon({
+                className: "sipspot-you-are-here",
+                html: '<div class="sipspot-user-dot" role="img" aria-label="You are here"></div>',
+                iconSize: [22, 22],
+                iconAnchor: [11, 11]
+              }),
+              interactive: false,
+              keyboard: false,
+              zIndexOffset: 1000,
+              alt: "You are here"
+            }).addTo(map);
+          }
+          if (popupHtml && userMarker.bindPopup && !userMarker.getPopup()) {
+            userMarker.bindPopup(popupHtml);
+          }
         },
         removeUserMarker: function () {
+          if (userAccuracy) {
+            map.removeLayer(userAccuracy);
+            userAccuracy = null;
+          }
           if (userMarker) {
             map.removeLayer(userMarker);
             userMarker = null;
           }
+        },
+        addLocateControl: function (options) {
+          const onClick = options && options.onClick;
+          const LocateControl = L.Control.extend({
+            options: { position: "bottomright" },
+            onAdd: function () {
+              const wrap = L.DomUtil.create("div", "sipspot-locate-control leaflet-control");
+              const btn = L.DomUtil.create("button", "sipspot-locate-btn", wrap);
+              btn.type = "button";
+              btn.setAttribute("aria-label", "Use my location");
+              btn.setAttribute("title", "Use my location");
+              btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>';
+              L.DomEvent.disableClickPropagation(wrap);
+              L.DomEvent.disableScrollPropagation(wrap);
+              L.DomEvent.on(btn, "click", function (e) {
+                L.DomEvent.stop(e);
+                if (typeof onClick === "function") onClick();
+              });
+              this._button = btn;
+              return wrap;
+            }
+          });
+          const control = new LocateControl();
+          control.addTo(map);
+          locateButton = control._button;
+          return control;
+        },
+        setLocateState: function (mode) {
+          const btn = locateButton;
+          if (!btn) return;
+          const locating = mode === "locating";
+          const active = mode === "active";
+          btn.classList.toggle("is-locating", locating);
+          btn.classList.toggle("is-active", active);
+          btn.setAttribute("aria-busy", locating ? "true" : "false");
+          btn.setAttribute("aria-label", locating ? "Finding your location" : "Use my location");
+          btn.disabled = locating;
+        },
+        onDragStart: function (fn) {
+          map.on("dragstart", fn);
         },
         openPopupAt: function (groupId, lat, lon, zoom) {
           const z = Math.max(map.getZoom(), zoom || 16);

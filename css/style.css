@@ -795,3 +795,86 @@ a.feedback-osm-link:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* Use my location control (on the map) and you-are-here marker */
+.sipspot-locate-control {
+  margin: 0 10px 12px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sipspot-locate-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #1E88E5;
+  box-shadow: 0 1px 4px rgba(13, 33, 55, 0.28);
+  cursor: pointer;
+  position: relative;
+  line-height: 0;
+}
+.sipspot-locate-btn svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+.sipspot-locate-btn:hover {
+  background: #f5faff;
+  color: #1565C0;
+}
+.sipspot-locate-btn:focus-visible {
+  outline: 2px solid #1E88E5;
+  outline-offset: 2px;
+}
+.sipspot-locate-btn.is-active {
+  color: #1565C0;
+  box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.35), 0 1px 4px rgba(13, 33, 55, 0.28);
+}
+.sipspot-locate-btn.is-locating {
+  color: #90caf9;
+  cursor: wait;
+}
+.sipspot-locate-btn.is-locating svg {
+  opacity: 0;
+}
+.sipspot-locate-btn.is-locating::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #bbdefb;
+  border-top-color: #1E88E5;
+  border-radius: 50%;
+  animation: sipspot-spin 0.7s linear infinite;
+}
+@keyframes sipspot-spin {
+  to { transform: rotate(360deg); }
+}
+
+.sipspot-you-are-here {
+  background: none !important;
+  border: 0 !important;
+}
+.sipspot-user-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1E88E5;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px rgba(21, 101, 192, 0.25), 0 1px 4px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+
+.btn-primary.is-locating {
+  cursor: wait;
+}

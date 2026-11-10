@@ -23,7 +23,9 @@
     },
     city: null,
     map: null,
-    feedbackByKey: {}
+    feedbackByKey: {},
+    locateWatchId: null,
+    locateRecenter: false
   };
 
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -819,33 +821,84 @@
     el.classList.toggle("error", !!isError);
   }
 
-  function locate() {
+  function setLocateState(mode) {
     const btn = $("#locate-btn");
+    if (btn) {
+      btn.disabled = mode === "locating";
+      btn.classList.toggle("is-locating", mode === "locating");
+      btn.classList.toggle("is-active", mode === "active");
+    }
+    if (state.map && state.map.setLocateState) state.map.setLocateState(mode);
+  }
+
+  function locateErrorMessage(err) {
+    if (err && err.code === 1) {
+      return "Location permission was denied. You can still browse the map.";
+    }
+    if (err && err.code === 3) {
+      return "It took too long to find your location. Check your signal and try again, or browse the map instead.";
+    }
+    if (err && err.code === 2) {
+      return "Your location is currently unavailable. You can still browse the map.";
+    }
+    return "Could not get your location. You can still browse the map.";
+  }
+
+  function applyPosition(pos, recenter) {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const firstFix = state.userLat == null;
+    state.userLat = lat;
+    state.userLon = lon;
+    state.map.addUserMarker(lat, lon, "You are here", pos.coords.accuracy);
+    if (recenter) {
+      state.map.setView(lat, lon, 14);
+    }
+    if (recenter || firstFix) {
+      refresh();
+      setStatus("Showing points nearest to you. Distances are an approximate walking estimate, not a turn-by-turn route.");
+    }
+  }
+
+  function locate() {
     if (!navigator.geolocation) {
       setStatus("Geolocation is not supported in this browser.", true);
       return;
     }
-    if (btn) btn.disabled = true;
+    state.locateRecenter = true;
+    setLocateState("locating");
     setStatus("Finding your location…");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        state.userLat = pos.coords.latitude;
-        state.userLon = pos.coords.longitude;
-        state.map.addUserMarker(state.userLat, state.userLon, "You are here");
-        state.map.setView(state.userLat, state.userLon, 14);
-        if (btn) btn.disabled = false;
-        setStatus("Showing points nearest to you. Distances are an approximate walking estimate, not a turn-by-turn route.");
-        refresh();
-      },
-      (err) => {
-        if (btn) btn.disabled = false;
-        const msg = err && err.code === 1
-          ? "Location permission was denied. You can still browse the map."
-          : "Could not get your location. You can still browse the map.";
-        setStatus(msg, true);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
-    );
+
+    const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 };
+
+    if (state.locateWatchId == null) {
+      state.locateWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const shouldCenter = state.locateRecenter;
+          state.locateRecenter = false;
+          setLocateState("active");
+          applyPosition(pos, shouldCenter);
+        },
+        (err) => {
+          setLocateState(state.userLat != null ? "active" : "idle");
+          setStatus(locateErrorMessage(err), true);
+          if (err && err.code === 1 && state.locateWatchId != null) {
+            navigator.geolocation.clearWatch(state.locateWatchId);
+            state.locateWatchId = null;
+          }
+        },
+        options
+      );
+      return;
+    }
+
+    if (state.userLat != null) {
+      state.map.setView(state.userLat, state.userLon, 14);
+      refresh();
+      setLocateState("active");
+      setStatus("Showing points nearest to you. Distances are an approximate walking estimate, not a turn-by-turn route.");
+      state.locateRecenter = false;
+    }
   }
 
   function initFilters() {
@@ -893,6 +946,12 @@
     initFilters();
     initDirections();
     applyStaleLabels();
+    if (state.map && state.map.addLocateControl) {
+      state.map.addLocateControl({ onClick: locate });
+    }
+    if (state.map && state.map.onDragStart) {
+      state.map.onDragStart(function () { state.locateRecenter = false; });
+    }
     const locateBtn = $("#locate-btn");
     if (locateBtn) locateBtn.addEventListener("click", locate);
 
