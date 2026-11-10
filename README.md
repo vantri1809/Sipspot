@@ -123,9 +123,21 @@ The weekly OSM workflow does **not** commit `data/partners.geojson`.
 
 ## Map providers
 
-The default map is **Leaflet** with [OpenStreetMap](https://www.openstreetmap.org/copyright) raster tiles (`tile.openstreetmap.org`). All pin, filter, cluster and partner-layer code talks to a small adapter in `js/map-provider.js`. Change `tilesUrl` and `tilesAttribution` in `config.json` if you want a different OSM-based basemap.
+The default map is **Leaflet** with the [CARTO Voyager](https://carto.com/basemaps) vector style, loaded through MapLibre GL Leaflet. All pin, filter, cluster and partner-layer code talks to a small adapter in `js/map-provider.js`. Attribution on the map is “© OpenStreetMap contributors, © CARTO”, with both names linked.
 
-The OSMF [tile usage policy](https://operations.osmfoundation.org/policies/tiles/) asks heavy or production sites not to use `tile.openstreetmap.org` as a default. For a public launch, point `tilesUrl` at your own tiles, or a free OSM-based host such as [OpenFreeMap](https://openfreemap.org/). Carto Voyager was tried first but now watermarks tiles with “API KEY REQUIRED” unless a Carto key is set, so it is not the default.
+CARTO raster tiles have required a key since 25 September 2026. With no `tilesApiKey` set, the adapter uses CARTO's keyless vector style (`https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json`) so the default works without a key. If you later add a CARTO key, it will switch to the Voyager raster tiles automatically.
+
+To switch the basemap, change one line in `config.json` and rebuild `js/config.js` (or run `python3 scripts/generate_pages.py`):
+
+```json
+"basemap": "carto-voyager"
+```
+
+Built-in catalog keys (defined in `js/map-provider.js`): `carto-voyager` (default), `carto-positron`, `osm`, `stadia-alidade-smooth`, `stadia-osm-bright`, `maptiler-streets`, `maptiler-dataviz`, `openfreemap-liberty`, `openfreemap-positron`, `openfreemap-bright`. Raster styles that need a key also accept `tilesApiKey`. MapTiler always needs a key and falls back to OSM if none is set. Stadia works without a key on `localhost`; a production site needs domain authentication or an API key. OpenFreeMap is vector-only and is loaded through MapLibre GL Leaflet.
+
+You can preview another style locally with `?basemap=osm` without editing the file.
+
+The OSMF [tile usage policy](https://operations.osmfoundation.org/policies/tiles/) asks heavy or production sites not to use `tile.openstreetmap.org` as a default, which is why the live site no longer uses those tiles. If you switch `basemap` back to `osm`, use your own tiles or another host for a public launch.
 
 To switch later to the **Google Maps JavaScript API**, set in `config.json`:
 

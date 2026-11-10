@@ -23,6 +23,8 @@
   "osmDataUrl": "/data/points.geojson",
   "partnerDataUrl": "/data/partners.geojson",
   "mapProvider": "leaflet-osm",
+  "basemap": "carto-voyager",
+  "tilesApiKey": "",
   "googleMapsApiKey": "",
   "palette": "Fresh",
   "colors": {

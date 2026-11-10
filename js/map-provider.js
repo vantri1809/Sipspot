@@ -2,8 +2,22 @@
  *
  * The rest of the app (pins, filters, OSM layer, partner layer, popups,
  * clustering, geolocation) talks only to the object returned by
- * RefillMap.createMap(). Swap the basemap by setting
- * REFILLMAP_CONFIG.mapProvider to "leaflet-osm" (default) or "google".
+ * RefillMap.createMap(). Swap the tile style by setting
+ * REFILLMAP_CONFIG.basemap to a catalog key (default "carto-voyager"). Set
+ * mapProvider to "google" later for the Google Maps hook.
+ *
+ * Switching tiles is one line in config.json, for example:
+ *   "basemap": "osm"
+ * Raster styles use Leaflet's tile layer. Vector styles (OpenFreeMap, and
+ * CARTO Voyager/Positron when no raster API key is set) lazy-load MapLibre
+ * GL through @maplibre/maplibre-gl-leaflet. Pins and clusters stay on Leaflet.
+ * The live default is CARTO Voyager on the keyless vector path, because
+ * CARTO raster tiles have required a key since 25 September 2026.
+ *
+ * Optional tilesApiKey is appended for providers that require a key
+ * (CARTO raster, MapTiler, Stadia in production). Local ?basemap= or
+ * window.__SIPSPOT_BASEMAP_OVERRIDE can preview a style without editing
+ * the file.
  *
  * The Google provider is a hook for later. It is not wired up to a live
  * key in this build. Do not use Google Places or Google Geocoding data
@@ -15,6 +29,227 @@
 
   function cfg() {
     return root.REFILLMAP_CONFIG || {};
+  }
+
+  const MAPLIBRE_CSS = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css";
+  const MAPLIBRE_JS = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js";
+  const MAPLIBRE_LEAFLET_JS = "https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js";
+
+  const OSM_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  const CARTO_ATTR = OSM_ATTR + ', &copy; <a href="https://carto.com/attribution/">CARTO</a>';
+  const STADIA_ATTR = '&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> ' + OSM_ATTR;
+  const MAPTILER_ATTR = '&copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> ' + OSM_ATTR;
+  const OPENFREEMAP_ATTR = '<a href="https://openfreemap.org/" target="_blank">OpenFreeMap</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>';
+
+  const BUILTIN_BASEMAPS = {
+    osm: {
+      type: "raster",
+      tilesUrl: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      attribution: OSM_ATTR,
+      maxZoom: 19,
+      requiresKey: false
+    },
+    "carto-voyager": {
+      type: "raster",
+      tilesUrl: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+      vectorStyleUrl: "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json",
+      attribution: CARTO_ATTR,
+      maxZoom: 20,
+      keyParam: "key",
+      requiresKey: true,
+      fallbackToVectorWithoutKey: true
+    },
+    "carto-positron": {
+      type: "raster",
+      tilesUrl: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      vectorStyleUrl: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+      attribution: CARTO_ATTR,
+      maxZoom: 20,
+      keyParam: "key",
+      requiresKey: true,
+      fallbackToVectorWithoutKey: true
+    },
+    "stadia-alidade-smooth": {
+      type: "raster",
+      tilesUrl: "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png",
+      attribution: STADIA_ATTR,
+      maxZoom: 20,
+      keyParam: "api_key",
+      requiresKey: false
+    },
+    "stadia-osm-bright": {
+      type: "raster",
+      tilesUrl: "https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png",
+      attribution: STADIA_ATTR,
+      maxZoom: 20,
+      keyParam: "api_key",
+      requiresKey: false
+    },
+    "maptiler-streets": {
+      type: "raster",
+      tilesUrl: "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png",
+      attribution: MAPTILER_ATTR,
+      maxZoom: 22,
+      keyParam: "key",
+      requiresKey: true
+    },
+    "maptiler-dataviz": {
+      type: "raster",
+      tilesUrl: "https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png",
+      attribution: MAPTILER_ATTR,
+      maxZoom: 22,
+      keyParam: "key",
+      requiresKey: true
+    },
+    "openfreemap-liberty": {
+      type: "vector",
+      vectorStyleUrl: "https://tiles.openfreemap.org/styles/liberty",
+      attribution: OPENFREEMAP_ATTR,
+      maxZoom: 22,
+      requiresKey: false
+    },
+    "openfreemap-positron": {
+      type: "vector",
+      vectorStyleUrl: "https://tiles.openfreemap.org/styles/positron",
+      attribution: OPENFREEMAP_ATTR,
+      maxZoom: 22,
+      requiresKey: false
+    },
+    "openfreemap-bright": {
+      type: "vector",
+      vectorStyleUrl: "https://tiles.openfreemap.org/styles/bright",
+      attribution: OPENFREEMAP_ATTR,
+      maxZoom: 22,
+      requiresKey: false
+    }
+  };
+
+  function appendKey(url, key, keyParam) {
+    if (!url) return url;
+    if (url.indexOf("{key}") !== -1) {
+      return url.replace(/\{key\}/g, encodeURIComponent(key || ""));
+    }
+    if (key && keyParam) {
+      return url + (url.indexOf("?") === -1 ? "?" : "&") + keyParam + "=" + encodeURIComponent(key);
+    }
+    return url;
+  }
+
+  function requestedBasemapName(c) {
+    let queryName = "";
+    try {
+      queryName = new URLSearchParams(window.location.search).get("basemap") || "";
+    } catch (e) {
+      queryName = "";
+    }
+    return String(root.__SIPSPOT_BASEMAP_OVERRIDE || queryName || c.basemap || "osm").toLowerCase();
+  }
+
+  function resolveBasemap(c, forcedName) {
+    const catalog = Object.assign({}, BUILTIN_BASEMAPS, c.basemaps || {});
+    let name = forcedName || requestedBasemapName(c);
+    if (!catalog[name]) {
+      console.warn("RefillMap: unknown basemap '" + name + "', using osm");
+      name = "osm";
+    }
+    const style = catalog[name];
+    const key = c.tilesApiKey || style.apiKey || "";
+    if (name !== "osm" && style.requiresKey && !key && !style.fallbackToVectorWithoutKey) {
+      console.warn(
+        "RefillMap: basemap '" + name + "' needs a tilesApiKey; falling back to osm"
+      );
+      return resolveBasemap(c, "osm");
+    }
+    const needsVector = style.type === "vector" || (style.fallbackToVectorWithoutKey && !key);
+    return {
+      name: name,
+      type: needsVector ? "vector" : "raster",
+      tilesUrl: appendKey(style.tilesUrl || c.tilesUrl, key, style.keyParam),
+      styleUrl: appendKey(style.vectorStyleUrl, key, style.keyParam),
+      attribution: style.attribution || c.tilesAttribution || OSM_ATTR,
+      maxZoom: style.maxZoom || c.tilesMaxZoom || 19,
+      subdomains: style.subdomains || "abcd",
+      requiresKey: !!style.requiresKey,
+      hasKey: !!key
+    };
+  }
+
+  function loadExternalCss(href) {
+    if (document.querySelector('link[href="' + href + '"]')) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    document.head.appendChild(link);
+  }
+
+  function loadExternalScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (
+        src === MAPLIBRE_JS &&
+        typeof root.maplibregl !== "undefined" &&
+        typeof L !== "undefined" &&
+        typeof L.maplibreGL === "function"
+      ) {
+        resolve();
+        return;
+      }
+      const existing = document.querySelector('script[src="' + src + '"]');
+      if (existing) {
+        if (existing.getAttribute("data-loaded") === "1" || (src === MAPLIBRE_JS && typeof root.maplibregl !== "undefined")) {
+          resolve();
+          return;
+        }
+        existing.addEventListener("load", function () { resolve(); });
+        existing.addEventListener("error", function () { reject(new Error("Failed to load " + src)); });
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = src;
+      s.async = true;
+      s.onload = function () {
+        s.setAttribute("data-loaded", "1");
+        resolve();
+      };
+      s.onerror = function () { reject(new Error("Failed to load " + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function addRasterLayer(map, basemap) {
+    return L.tileLayer(basemap.tilesUrl, {
+      attribution: basemap.attribution,
+      maxZoom: basemap.maxZoom,
+      subdomains: basemap.subdomains,
+      r: L.Browser && L.Browser.retina ? "@2x" : ""
+    }).addTo(map);
+  }
+
+  function addOsmFallback(map) {
+    L.tileLayer(BUILTIN_BASEMAPS.osm.tilesUrl, {
+      attribution: BUILTIN_BASEMAPS.osm.attribution,
+      maxZoom: BUILTIN_BASEMAPS.osm.maxZoom
+    }).addTo(map);
+  }
+
+  function addVectorLayer(map, basemap) {
+    loadExternalCss(MAPLIBRE_CSS);
+    return loadExternalScript(MAPLIBRE_JS)
+      .then(function () { return loadExternalScript(MAPLIBRE_LEAFLET_JS); })
+      .then(function () {
+        if (typeof L.maplibreGL !== "function") {
+          throw new Error("maplibre-gl-leaflet failed to load");
+        }
+        const layer = L.maplibreGL({
+          style: basemap.styleUrl,
+          attribution: basemap.attribution
+        });
+        layer.addTo(map);
+        return layer;
+      })
+      .catch(function (err) {
+        console.warn("RefillMap: vector basemap failed, falling back to OSM raster", err);
+        addOsmFallback(map);
+      });
   }
 
   function almostEqual(a, b) {
@@ -29,18 +264,25 @@
         throw new Error("Leaflet failed to load");
       }
       const c = cfg();
-      const map = L.map(container, { scrollWheelZoom: true, attributionControl: true });
+      const basemap = resolveBasemap(c);
+      const map = L.map(container, {
+        scrollWheelZoom: true,
+        attributionControl: true,
+        maxZoom: basemap.maxZoom || 19,
+        minZoom: 3
+      });
       map.setView(options.center, options.zoom);
       // Back-reference for tests (not a public API).
       if (container) container._sipspotLeafletMap = map;
+      if (container) container._sipspotBasemap = basemap.name;
       map.on("popupopen", function (e) {
         protectPopupFromGhostClick(map, e.popup);
       });
-      L.tileLayer(c.tilesUrl, {
-        attribution: c.tilesAttribution,
-        maxZoom: c.tilesMaxZoom || 19,
-        subdomains: "abcd"
-      }).addTo(map);
+      if (basemap.type === "vector") {
+        addVectorLayer(map, basemap);
+      } else {
+        addRasterLayer(map, basemap);
+      }
 
       const groups = Object.create(null);
       let userMarker = null;

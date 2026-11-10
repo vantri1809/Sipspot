@@ -24,6 +24,8 @@ window.SIPSPOT_CONFIG = {
   osmDataUrl: "/data/points.geojson",
   partnerDataUrl: "/data/partners.geojson",
   mapProvider: "leaflet-osm",
+  basemap: "carto-voyager",
+  tilesApiKey: "",
   googleMapsApiKey: "",
   palette: "Fresh",
   colors: {"primary": "#1E88E5", "leaf": "#43A047", "background": "#E3F2FD", "partner": "#8E24AA"},
