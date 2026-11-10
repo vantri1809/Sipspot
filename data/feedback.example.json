@@ -1,0 +1,11 @@
+{
+  "comment": "Optional overlay of visitor confirmations. Copy to data/feedback.json and add real rows when you have them. Do not invent confirmations. The site loads this file if present and shows “Confirmed by visitors on <date>” for matching OSM points. Votes never remove points. The data scripts do not read or write this file.",
+  "points": [
+    {
+      "osm_type": "node",
+      "osm_id": 0,
+      "status": "here",
+      "confirmed_on": "2026-10-15"
+    }
+  ]
+}

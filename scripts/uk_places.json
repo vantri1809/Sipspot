@@ -1,0 +1,857 @@
+[
+  {
+    "slug": "london",
+    "name": "London",
+    "lat": 51.5074,
+    "lon": -0.1278,
+    "radius_km": 28,
+    "population": 8799800,
+    "zoom": 12
+  },
+  {
+    "slug": "birmingham",
+    "name": "Birmingham",
+    "lat": 52.4862,
+    "lon": -1.8904,
+    "radius_km": 16,
+    "population": 1144900,
+    "zoom": 12
+  },
+  {
+    "slug": "leeds",
+    "name": "Leeds",
+    "lat": 53.8008,
+    "lon": -1.5491,
+    "radius_km": 12,
+    "population": 812000,
+    "zoom": 12
+  },
+  {
+    "slug": "glasgow",
+    "name": "Glasgow",
+    "lat": 55.8642,
+    "lon": -4.2518,
+    "radius_km": 14,
+    "population": 635000,
+    "zoom": 12
+  },
+  {
+    "slug": "sheffield",
+    "name": "Sheffield",
+    "lat": 53.3811,
+    "lon": -1.4701,
+    "radius_km": 12,
+    "population": 556500,
+    "zoom": 12
+  },
+  {
+    "slug": "manchester",
+    "name": "Manchester",
+    "lat": 53.4808,
+    "lon": -2.2426,
+    "radius_km": 14,
+    "population": 552000,
+    "zoom": 12
+  },
+  {
+    "slug": "bradford",
+    "name": "Bradford",
+    "lat": 53.796,
+    "lon": -1.7594,
+    "radius_km": 10,
+    "population": 546400,
+    "zoom": 12
+  },
+  {
+    "slug": "edinburgh",
+    "name": "Edinburgh",
+    "lat": 55.9533,
+    "lon": -3.1883,
+    "radius_km": 10,
+    "population": 526000,
+    "zoom": 12
+  },
+  {
+    "slug": "liverpool",
+    "name": "Liverpool",
+    "lat": 53.4084,
+    "lon": -2.9916,
+    "radius_km": 12,
+    "population": 506000,
+    "zoom": 12
+  },
+  {
+    "slug": "bristol",
+    "name": "Bristol",
+    "lat": 51.4545,
+    "lon": -2.5879,
+    "radius_km": 11,
+    "population": 472000,
+    "zoom": 12
+  },
+  {
+    "slug": "leicester",
+    "name": "Leicester",
+    "lat": 52.6369,
+    "lon": -1.1398,
+    "radius_km": 10,
+    "population": 368600,
+    "zoom": 12
+  },
+  {
+    "slug": "cardiff",
+    "name": "Cardiff",
+    "lat": 51.4816,
+    "lon": -3.1791,
+    "radius_km": 10,
+    "population": 362400,
+    "zoom": 12
+  },
+  {
+    "slug": "coventry",
+    "name": "Coventry",
+    "lat": 52.4068,
+    "lon": -1.5197,
+    "radius_km": 9,
+    "population": 345300,
+    "zoom": 12
+  },
+  {
+    "slug": "belfast",
+    "name": "Belfast",
+    "lat": 54.5973,
+    "lon": -5.9301,
+    "radius_km": 10,
+    "population": 345000,
+    "zoom": 12
+  },
+  {
+    "slug": "nottingham",
+    "name": "Nottingham",
+    "lat": 52.9548,
+    "lon": -1.1581,
+    "radius_km": 10,
+    "population": 323600,
+    "zoom": 12
+  },
+  {
+    "slug": "newcastle",
+    "name": "Newcastle upon Tyne",
+    "lat": 54.9783,
+    "lon": -1.6178,
+    "radius_km": 12,
+    "population": 300196,
+    "zoom": 12
+  },
+  {
+    "slug": "milton-keynes",
+    "name": "Milton Keynes",
+    "lat": 52.0406,
+    "lon": -0.7594,
+    "radius_km": 9,
+    "population": 287000,
+    "zoom": 12
+  },
+  {
+    "slug": "brighton",
+    "name": "Brighton and Hove",
+    "lat": 50.8225,
+    "lon": -0.1372,
+    "radius_km": 8,
+    "population": 277000,
+    "zoom": 12
+  },
+  {
+    "slug": "southampton",
+    "name": "Southampton",
+    "lat": 50.9097,
+    "lon": -1.4044,
+    "radius_km": 9,
+    "population": 269000,
+    "zoom": 12
+  },
+  {
+    "slug": "hull",
+    "name": "Kingston upon Hull",
+    "lat": 53.7676,
+    "lon": -0.3274,
+    "radius_km": 9,
+    "population": 267014,
+    "zoom": 12
+  },
+  {
+    "slug": "plymouth",
+    "name": "Plymouth",
+    "lat": 50.3755,
+    "lon": -4.1427,
+    "radius_km": 9,
+    "population": 264700,
+    "zoom": 12
+  },
+  {
+    "slug": "wolverhampton",
+    "name": "Wolverhampton",
+    "lat": 52.5862,
+    "lon": -2.1285,
+    "radius_km": 8,
+    "population": 263700,
+    "zoom": 12
+  },
+  {
+    "slug": "derby",
+    "name": "Derby",
+    "lat": 52.9225,
+    "lon": -1.4746,
+    "radius_km": 9,
+    "population": 261400,
+    "zoom": 12
+  },
+  {
+    "slug": "stoke",
+    "name": "Stoke-on-Trent",
+    "lat": 53.0027,
+    "lon": -2.1794,
+    "radius_km": 9,
+    "population": 258000,
+    "zoom": 12
+  },
+  {
+    "slug": "swansea",
+    "name": "Swansea",
+    "lat": 51.6214,
+    "lon": -3.9436,
+    "radius_km": 9,
+    "population": 245000,
+    "zoom": 12
+  },
+  {
+    "slug": "northampton",
+    "name": "Northampton",
+    "lat": 52.2405,
+    "lon": -0.9027,
+    "radius_km": 8,
+    "population": 245000,
+    "zoom": 12
+  },
+  {
+    "slug": "aberdeen",
+    "name": "Aberdeen",
+    "lat": 57.1497,
+    "lon": -2.0943,
+    "radius_km": 9,
+    "population": 227000,
+    "zoom": 12
+  },
+  {
+    "slug": "luton",
+    "name": "Luton",
+    "lat": 51.8787,
+    "lon": -0.42,
+    "radius_km": 8,
+    "population": 225262,
+    "zoom": 12
+  },
+  {
+    "slug": "portsmouth",
+    "name": "Portsmouth",
+    "lat": 50.8198,
+    "lon": -1.088,
+    "radius_km": 8,
+    "population": 208100,
+    "zoom": 12
+  },
+  {
+    "slug": "reading",
+    "name": "Reading",
+    "lat": 51.4543,
+    "lon": -0.9781,
+    "radius_km": 8,
+    "population": 174200,
+    "zoom": 12
+  },
+  {
+    "slug": "norwich",
+    "name": "Norwich",
+    "lat": 52.6309,
+    "lon": 1.2974,
+    "radius_km": 8,
+    "population": 195971,
+    "zoom": 12
+  },
+  {
+    "slug": "york",
+    "name": "York",
+    "lat": 53.96,
+    "lon": -1.0873,
+    "radius_km": 8,
+    "population": 202800,
+    "zoom": 12
+  },
+  {
+    "slug": "swindon",
+    "name": "Swindon",
+    "lat": 51.5558,
+    "lon": -1.7797,
+    "radius_km": 8,
+    "population": 222000,
+    "zoom": 12
+  },
+  {
+    "slug": "sunderland",
+    "name": "Sunderland",
+    "lat": 54.9069,
+    "lon": -1.3838,
+    "radius_km": 8,
+    "population": 174300,
+    "zoom": 12
+  },
+  {
+    "slug": "middlesbrough",
+    "name": "Middlesbrough",
+    "lat": 54.5742,
+    "lon": -1.235,
+    "radius_km": 8,
+    "population": 174700,
+    "zoom": 12
+  },
+  {
+    "slug": "peterborough",
+    "name": "Peterborough",
+    "lat": 52.5695,
+    "lon": -0.2405,
+    "radius_km": 8,
+    "population": 215700,
+    "zoom": 12
+  },
+  {
+    "slug": "oxford",
+    "name": "Oxford",
+    "lat": 51.752,
+    "lon": -1.2577,
+    "radius_km": 8,
+    "population": 162100,
+    "zoom": 12
+  },
+  {
+    "slug": "cambridge",
+    "name": "Cambridge",
+    "lat": 52.2053,
+    "lon": 0.1218,
+    "radius_km": 8,
+    "population": 145700,
+    "zoom": 12
+  },
+  {
+    "slug": "dundee",
+    "name": "Dundee",
+    "lat": 56.462,
+    "lon": -2.9707,
+    "radius_km": 8,
+    "population": 148300,
+    "zoom": 12
+  },
+  {
+    "slug": "exeter",
+    "name": "Exeter",
+    "lat": 50.7184,
+    "lon": -3.5339,
+    "radius_km": 8,
+    "population": 131400,
+    "zoom": 12
+  },
+  {
+    "slug": "bournemouth",
+    "name": "Bournemouth",
+    "lat": 50.7192,
+    "lon": -1.8808,
+    "radius_km": 9,
+    "population": 196900,
+    "zoom": 12
+  },
+  {
+    "slug": "poole",
+    "name": "Poole",
+    "lat": 50.715,
+    "lon": -1.9872,
+    "radius_km": 7,
+    "population": 151500,
+    "zoom": 12
+  },
+  {
+    "slug": "southend",
+    "name": "Southend-on-Sea",
+    "lat": 51.5459,
+    "lon": 0.7077,
+    "radius_km": 8,
+    "population": 180700,
+    "zoom": 12
+  },
+  {
+    "slug": "basildon",
+    "name": "Basildon",
+    "lat": 51.5761,
+    "lon": 0.4887,
+    "radius_km": 7,
+    "population": 187600,
+    "zoom": 12
+  },
+  {
+    "slug": "warrington",
+    "name": "Warrington",
+    "lat": 53.39,
+    "lon": -2.597,
+    "radius_km": 7,
+    "population": 174300,
+    "zoom": 12
+  },
+  {
+    "slug": "huddersfield",
+    "name": "Huddersfield",
+    "lat": 53.645,
+    "lon": -1.7798,
+    "radius_km": 7,
+    "population": 162900,
+    "zoom": 12
+  },
+  {
+    "slug": "blackburn",
+    "name": "Blackburn",
+    "lat": 53.7486,
+    "lon": -2.4877,
+    "radius_km": 7,
+    "population": 154700,
+    "zoom": 12
+  },
+  {
+    "slug": "slough",
+    "name": "Slough",
+    "lat": 51.5105,
+    "lon": -0.595,
+    "radius_km": 6,
+    "population": 158500,
+    "zoom": 12
+  },
+  {
+    "slug": "bath",
+    "name": "Bath",
+    "lat": 51.3811,
+    "lon": -2.359,
+    "radius_km": 7,
+    "population": 95300,
+    "zoom": 12
+  },
+  {
+    "slug": "canterbury",
+    "name": "Canterbury",
+    "lat": 51.2802,
+    "lon": 1.0789,
+    "radius_km": 7,
+    "population": 55240,
+    "zoom": 12
+  },
+  {
+    "slug": "chester",
+    "name": "Chester",
+    "lat": 53.1913,
+    "lon": -2.8919,
+    "radius_km": 7,
+    "population": 90500,
+    "zoom": 12
+  },
+  {
+    "slug": "durham",
+    "name": "Durham",
+    "lat": 54.7753,
+    "lon": -1.5849,
+    "radius_km": 7,
+    "population": 50500,
+    "zoom": 12
+  },
+  {
+    "slug": "inverness",
+    "name": "Inverness",
+    "lat": 57.4778,
+    "lon": -4.2247,
+    "radius_km": 8,
+    "population": 70000,
+    "zoom": 12
+  },
+  {
+    "slug": "derry",
+    "name": "Derry/Londonderry",
+    "lat": 54.9966,
+    "lon": -7.3086,
+    "radius_km": 8,
+    "population": 105000,
+    "zoom": 12
+  },
+  {
+    "slug": "lincoln",
+    "name": "Lincoln",
+    "lat": 53.2307,
+    "lon": -0.5406,
+    "radius_km": 7,
+    "population": 104000,
+    "zoom": 12
+  },
+  {
+    "slug": "worcester",
+    "name": "Worcester",
+    "lat": 52.1936,
+    "lon": -2.2215,
+    "radius_km": 7,
+    "population": 103900,
+    "zoom": 12
+  },
+  {
+    "slug": "gloucester",
+    "name": "Gloucester",
+    "lat": 51.8642,
+    "lon": -2.238,
+    "radius_km": 7,
+    "population": 145000,
+    "zoom": 12
+  },
+  {
+    "slug": "ipswich",
+    "name": "Ipswich",
+    "lat": 52.0567,
+    "lon": 1.1482,
+    "radius_km": 7,
+    "population": 151600,
+    "zoom": 12
+  },
+  {
+    "slug": "colchester",
+    "name": "Colchester",
+    "lat": 51.8959,
+    "lon": 0.8919,
+    "radius_km": 7,
+    "population": 130200,
+    "zoom": 12
+  },
+  {
+    "slug": "blackpool",
+    "name": "Blackpool",
+    "lat": 53.8175,
+    "lon": -3.0357,
+    "radius_km": 7,
+    "population": 141000,
+    "zoom": 12
+  },
+  {
+    "slug": "preston",
+    "name": "Preston",
+    "lat": 53.7632,
+    "lon": -2.7031,
+    "radius_km": 8,
+    "population": 147900,
+    "zoom": 12
+  },
+  {
+    "slug": "bolton",
+    "name": "Bolton",
+    "lat": 53.5765,
+    "lon": -2.4282,
+    "radius_km": 7,
+    "population": 194200,
+    "zoom": 12
+  },
+  {
+    "slug": "stockport",
+    "name": "Stockport",
+    "lat": 53.4083,
+    "lon": -2.1494,
+    "radius_km": 7,
+    "population": 137800,
+    "zoom": 12
+  },
+  {
+    "slug": "oldham",
+    "name": "Oldham",
+    "lat": 53.5409,
+    "lon": -2.1114,
+    "radius_km": 7,
+    "population": 110000,
+    "zoom": 12
+  },
+  {
+    "slug": "wigan",
+    "name": "Wigan",
+    "lat": 53.545,
+    "lon": -2.6326,
+    "radius_km": 7,
+    "population": 107700,
+    "zoom": 12
+  },
+  {
+    "slug": "doncaster",
+    "name": "Doncaster",
+    "lat": 53.5228,
+    "lon": -1.1285,
+    "radius_km": 8,
+    "population": 113600,
+    "zoom": 12
+  },
+  {
+    "slug": "rotherham",
+    "name": "Rotherham",
+    "lat": 53.4326,
+    "lon": -1.3635,
+    "radius_km": 7,
+    "population": 109700,
+    "zoom": 12
+  },
+  {
+    "slug": "barnsley",
+    "name": "Barnsley",
+    "lat": 53.5526,
+    "lon": -1.4797,
+    "radius_km": 7,
+    "population": 114800,
+    "zoom": 12
+  },
+  {
+    "slug": "wakefield",
+    "name": "Wakefield",
+    "lat": 53.6833,
+    "lon": -1.5059,
+    "radius_km": 7,
+    "population": 109800,
+    "zoom": 12
+  },
+  {
+    "slug": "newport",
+    "name": "Newport",
+    "lat": 51.5842,
+    "lon": -2.9977,
+    "radius_km": 8,
+    "population": 161400,
+    "zoom": 12
+  },
+  {
+    "slug": "wrexham",
+    "name": "Wrexham",
+    "lat": 53.043,
+    "lon": -2.9925,
+    "radius_km": 7,
+    "population": 65000,
+    "zoom": 12
+  },
+  {
+    "slug": "carlisle",
+    "name": "Carlisle",
+    "lat": 54.8925,
+    "lon": -2.9329,
+    "radius_km": 7,
+    "population": 75000,
+    "zoom": 12
+  },
+  {
+    "slug": "lancaster",
+    "name": "Lancaster",
+    "lat": 54.0466,
+    "lon": -2.8007,
+    "radius_km": 7,
+    "population": 52000,
+    "zoom": 12
+  },
+  {
+    "slug": "harrogate",
+    "name": "Harrogate",
+    "lat": 53.9921,
+    "lon": -1.5412,
+    "radius_km": 6,
+    "population": 75070,
+    "zoom": 12
+  },
+  {
+    "slug": "maidstone",
+    "name": "Maidstone",
+    "lat": 51.2704,
+    "lon": 0.5227,
+    "radius_km": 7,
+    "population": 113137,
+    "zoom": 12
+  },
+  {
+    "slug": "guildford",
+    "name": "Guildford",
+    "lat": 51.2365,
+    "lon": -0.5703,
+    "radius_km": 7,
+    "population": 80000,
+    "zoom": 12
+  },
+  {
+    "slug": "crawley",
+    "name": "Crawley",
+    "lat": 51.1092,
+    "lon": -0.1872,
+    "radius_km": 7,
+    "population": 118500,
+    "zoom": 12
+  },
+  {
+    "slug": "chelmsford",
+    "name": "Chelmsford",
+    "lat": 51.7356,
+    "lon": 0.4685,
+    "radius_km": 7,
+    "population": 111511,
+    "zoom": 12
+  },
+  {
+    "slug": "watford",
+    "name": "Watford",
+    "lat": 51.6565,
+    "lon": -0.3903,
+    "radius_km": 6,
+    "population": 102500,
+    "zoom": 12
+  },
+  {
+    "slug": "high-wycombe",
+    "name": "High Wycombe",
+    "lat": 51.6286,
+    "lon": -0.7482,
+    "radius_km": 6,
+    "population": 125257,
+    "zoom": 12
+  },
+  {
+    "slug": "basingstoke",
+    "name": "Basingstoke",
+    "lat": 51.2665,
+    "lon": -1.0873,
+    "radius_km": 7,
+    "population": 113776,
+    "zoom": 12
+  },
+  {
+    "slug": "eastbourne",
+    "name": "Eastbourne",
+    "lat": 50.768,
+    "lon": 0.2905,
+    "radius_km": 6,
+    "population": 103745,
+    "zoom": 12
+  },
+  {
+    "slug": "hastings",
+    "name": "Hastings",
+    "lat": 50.8543,
+    "lon": 0.5731,
+    "radius_km": 6,
+    "population": 91000,
+    "zoom": 12
+  },
+  {
+    "slug": "worthing",
+    "name": "Worthing",
+    "lat": 50.8147,
+    "lon": -0.3714,
+    "radius_km": 6,
+    "population": 111000,
+    "zoom": 12
+  },
+  {
+    "slug": "stirling",
+    "name": "Stirling",
+    "lat": 56.1165,
+    "lon": -3.9369,
+    "radius_km": 7,
+    "population": 37800,
+    "zoom": 12
+  },
+  {
+    "slug": "perth",
+    "name": "Perth",
+    "lat": 56.396,
+    "lon": -3.437,
+    "radius_km": 7,
+    "population": 47400,
+    "zoom": 12
+  },
+  {
+    "slug": "hereford",
+    "name": "Hereford",
+    "lat": 52.0565,
+    "lon": -2.716,
+    "radius_km": 7,
+    "population": 61000,
+    "zoom": 12
+  },
+  {
+    "slug": "shrewsbury",
+    "name": "Shrewsbury",
+    "lat": 52.7073,
+    "lon": -2.7553,
+    "radius_km": 7,
+    "population": 76700,
+    "zoom": 12
+  },
+  {
+    "slug": "truro",
+    "name": "Truro",
+    "lat": 50.2632,
+    "lon": -5.051,
+    "radius_km": 7,
+    "population": 21500,
+    "zoom": 12
+  },
+  {
+    "slug": "newry",
+    "name": "Newry",
+    "lat": 54.1751,
+    "lon": -6.3402,
+    "radius_km": 7,
+    "population": 28000,
+    "zoom": 12
+  },
+  {
+    "slug": "lisburn",
+    "name": "Lisburn",
+    "lat": 54.5162,
+    "lon": -6.0581,
+    "radius_km": 7,
+    "population": 45400,
+    "zoom": 12
+  },
+  {
+    "slug": "salisbury",
+    "name": "Salisbury",
+    "lat": 51.0686,
+    "lon": -1.7944,
+    "radius_km": 6,
+    "population": 45000,
+    "zoom": 12
+  },
+  {
+    "slug": "winchester",
+    "name": "Winchester",
+    "lat": 51.0632,
+    "lon": -1.308,
+    "radius_km": 6,
+    "population": 48200,
+    "zoom": 12
+  },
+  {
+    "slug": "bedford",
+    "name": "Bedford",
+    "lat": 52.1359,
+    "lon": -0.4667,
+    "radius_km": 7,
+    "population": 106900,
+    "zoom": 12
+  },
+  {
+    "slug": "salford",
+    "name": "Salford",
+    "lat": 53.4875,
+    "lon": -2.2901,
+    "radius_km": 7,
+    "population": 129794,
+    "zoom": 12
+  }
+]

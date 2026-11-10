@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>List your business — SipSpot</title>
+  <meta name="description" content="List your business as a SipSpot cooler partner. Skip the plastic. Find a tap.">
+  <link rel="canonical" href="https://sipspot.uk/list-your-business/">
+  <meta property="og:title" content="List your business — SipSpot">
+  <meta property="og:description" content="List your business as a SipSpot cooler partner. Skip the plastic. Find a tap.">
+  <meta property="og:url" content="https://sipspot.uk/list-your-business/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_GB">
+  <meta name="theme-color" content="#1E88E5">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  
+</head>
+<body>
+  <header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="../" aria-label="SipSpot home">
+      <svg class="brand-mark" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="18" cy="18" r="18" fill="#1E88E5"/><path d="M18 7.5c-5.2 6.2-7.2 9.4-7.2 12.2a7.2 7.2 0 0 0 14.4 0c0-2.8-2-6-7.2-12.2z" fill="#ffffff"/><path d="M25 11c2.2 1.1 3.4 2.8 3 4.4-1.5-.2-2.8-1-3.6-2.2-.4-1.2-.3-2.2.6-2.2z" fill="#43A047"/></svg>
+      <span class="brand-text">
+        <span class="brand-name">SipSpot</span>
+        <span class="header-tagline">Find it. Fill it. Go.</span>
+      </span>
+    </a>
+    <nav class="nav" aria-label="Site"><a href="../">Map</a><a href="../cities/">Cities</a><a href="../list-your-business/" aria-current="page">List your business</a><a href="../privacy/">Privacy</a></nav>
+  </div>
+</header>
+  <main class="page-body">
+    <div class="wrap">
+      <h1>List your business</h1>
+      <p class="lede">Offer a free walk-in bottle fill — free for anyone, no purchase needed — and appear on SipSpot as a cooler partner. There is no account, no password and no payment at this stage. Find it. Fill it. Go.</p>
+      <div class="poster-card" aria-label="Partner poster wording">
+        <p class="poster-brand">SipSpot</p>
+        <p class="poster-line">Skip the plastic. Find a tap.</p>
+        <p class="poster-caption">Suggested line for partner posters and window stickers.</p>
+      </div>
+      <form class="form" id="partner-form" novalidate>
+        <label>Business name
+          <input type="text" name="business" required autocomplete="organization">
+        </label>
+        <label>Your name
+          <input type="text" name="contact_name" required autocomplete="name">
+        </label>
+        <label>Email
+          <input type="email" name="email" required autocomplete="email">
+        </label>
+        <label>Address
+          <input type="text" name="address" required autocomplete="street-address">
+        </label>
+        <label>Postcode
+          <input type="text" name="postcode" required autocomplete="postal-code">
+        </label>
+        <label>Opening hours <span class="hint">(optional — shown as “Hours not listed” if left blank)</span>
+          <input type="text" name="hours" placeholder="Mo-Fr 08:00-17:00">
+        </label>
+        <label>Water type
+          <select name="water_type">
+            <option value="tap">Tap water</option>
+            <option value="filtered">Filtered water</option>
+            <option value="chilled filtered">Chilled filtered water</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </label>
+        <label>Chilled
+          <select name="chilled">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="walk_in_free" value="yes" required>
+          Free for anyone, no purchase needed (required)
+        </label>
+        <label>Notes <span class="hint">(optional)</span>
+          <textarea name="notes" placeholder="Where the cooler is, any access notes"></textarea>
+        </label>
+        <p class="hint">This form does not collect a password or take payment. It opens an email to hello@sipspot.uk, or posts to a form endpoint if one is set in config.json.</p>
+        <button type="submit" class="btn btn-primary">Send listing request</button>
+        <p class="status" id="form-status" role="status"></p>
+      </form>
+    </div>
+  </main>
+  <footer class="site-footer">
+  <div class="footer-inner">
+    <p><strong>SipSpot</strong> — Find it. Fill it. Go.</p>
+    <p class="licence-note">Map points labelled as OpenStreetMap data are licensed under the <a href="https://opendatacommons.org/licenses/odbl/">ODbL 1.0</a>. © OpenStreetMap contributors — <a href="https://www.openstreetmap.org/copyright">www.openstreetmap.org/copyright</a>. Partner listings are a separate dataset and are not combined with OSM data.</p>
+    <p>For partner posters and window stickers: “Skip the plastic. Find a tap.”</p>
+    <p>
+      <a href="../cities/">Cities</a> ·
+      <a href="../list-your-business/">List your business</a> ·
+      <a href="../privacy/">Privacy</a>
+    </p>
+  </div>
+</footer>
+  <script src="../js/config.js"></script>
+  <script src="../js/form.js"></script>
+</body>
+</html>

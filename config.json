@@ -1,0 +1,42 @@
+{
+  "brand": "SipSpot",
+  "shortBrand": "SipSpot",
+  "domain": "sipspot.uk",
+  "siteUrl": "https://sipspot.uk",
+  "locale": "en-GB",
+  "tagline": "Find it. Fill it. Go.",
+  "contactEmail": "hello@sipspot.uk",
+  "partnerFormEndpoint": "",
+  "osmAttributionText": "© OpenStreetMap contributors",
+  "osmAttributionUrl": "https://www.openstreetmap.org/copyright",
+  "tilesUrl": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  "tilesAttribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors",
+  "tilesMaxZoom": 19,
+  "defaultCenter": [
+    54.5,
+    -2.8
+  ],
+  "defaultZoom": 6,
+  "clusterDisableZoom": 16,
+  "walkingDetour": 1.25,
+  "walkingKmh": 5,
+  "osmDataUrl": "/data/points.geojson",
+  "partnerDataUrl": "/data/partners.geojson",
+  "mapProvider": "leaflet-osm",
+  "googleMapsApiKey": "",
+  "palette": "Fresh",
+  "colors": {
+    "primary": "#1E88E5",
+    "leaf": "#43A047",
+    "background": "#E3F2FD",
+    "partner": "#8E24AA"
+  },
+  "posterLine": "Skip the plastic. Find a tap.",
+  "metaDescription": "Find it. Fill it. Go. Free drinking water and bottle-fill points across the UK. No app, no account.",
+  "staleAfterMonths": 36,
+  "feedback": {
+    "enabled": true,
+    "endpoint": null,
+    "dataUrl": "/data/feedback.json"
+  }
+}
