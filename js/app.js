@@ -672,9 +672,26 @@
     });
   }
 
+  function featureId(feature, source) {
+    const p = (feature && feature.properties) || {};
+    const ll = featureLatLon(feature) || {};
+    const at = (ll.lat != null && ll.lon != null) ? (ll.lat + "," + ll.lon) : "";
+    if (source === "partner") {
+      return "partner:" + String(p.id || p.name || "") + ":" + at;
+    }
+    if (p.osm_type && p.osm_id != null) {
+      return "osm:" + p.osm_type + ":" + p.osm_id;
+    }
+    return (source || "osm") + ":" + at;
+  }
+
   function renderMarkers() {
     const map = state.map;
     if (!map) return;
+    /* Re-renders (filter changes, locate, or a future moveend refresh)
+     * must not lose the open popup. Remember the feature and reopen it
+     * on the new marker after the layers are rebuilt. */
+    const openId = map.getOpenPopupId ? map.getOpenPopupId() : null;
     map.clearGroup("osm");
     map.clearGroup("partner");
 
@@ -682,6 +699,7 @@
       const ll = featureLatLon(f);
       const p = f.properties;
       map.addMarker("osm", {
+        id: featureId(f, "osm"),
         lat: ll.lat,
         lon: ll.lon,
         kind: p.category || "public_fountain",
@@ -697,6 +715,7 @@
       const ll = featureLatLon(f);
       const p = f.properties;
       map.addMarker("partner", {
+        id: featureId(f, "partner"),
         lat: ll.lat,
         lon: ll.lon,
         kind: "partner",
@@ -706,6 +725,8 @@
         chilled: p.chilled
       });
     });
+
+    if (openId && map.openPopupById) map.openPopupById(openId);
   }
 
   function renderList() {

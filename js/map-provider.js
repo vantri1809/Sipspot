@@ -31,6 +31,11 @@
       const c = cfg();
       const map = L.map(container, { scrollWheelZoom: true, attributionControl: true });
       map.setView(options.center, options.zoom);
+      // Back-reference for tests (not a public API).
+      if (container) container._sipspotLeafletMap = map;
+      map.on("popupopen", function (e) {
+        protectPopupFromGhostClick(map, e.popup);
+      });
       L.tileLayer(c.tilesUrl, {
         attribution: c.tilesAttribution,
         maxZoom: c.tilesMaxZoom || 19,
@@ -60,22 +65,32 @@
         const type = marker && marker.water_type;
         const chilled = marker && (marker.chilled === true || type === "chilled_filtered");
         if (type === "filtered" || type === "chilled_filtered") {
-          flags.push('<span class="pin-flag filtered" title="Filtered water">F</span>');
+          flags.push('<span class="pin-flag filtered" aria-label="Filtered water">F</span>');
         }
         if (chilled) {
-          flags.push('<span class="pin-flag chilled" title="Chilled">C</span>');
+          flags.push('<span class="pin-flag chilled" aria-label="Chilled">C</span>');
         }
         return flags.length ? '<span class="pin-flags">' + flags.join("") + "</span>" : "";
+      }
+
+      function attrEscape(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;");
       }
 
       function markerIcon(kind, marker) {
         const deco = pinFlags(marker);
         const staleClass = marker && marker.stale ? " stale" : "";
         const staleNote = marker && marker.stale ? " — not updated in 3+ years" : "";
+        /* Use aria-label, never the HTML title attribute. On iOS Safari a
+         * title is shown as a tooltip on tap, which looks like a tiny popup
+         * of just the name and can interfere with opening the real popup. */
         if (kind === "partner") {
           return L.divIcon({
             className: "",
-            html: '<div class="rm-marker partner" title="Cooler partner"><span>P</span>' + deco + "</div>",
+            html: '<div class="rm-marker partner" role="img" aria-label="Cooler partner"><span>P</span>' + deco + "</div>",
             iconSize: [28, 28],
             iconAnchor: [14, 14],
             popupAnchor: [0, -14]
@@ -84,7 +99,7 @@
         if (kind === "cafe_refill") {
           return L.divIcon({
             className: "",
-            html: '<div class="rm-marker cafe' + staleClass + '" title="Café or shop' + staleNote + '"><span>💧</span>' + deco + "</div>",
+            html: '<div class="rm-marker cafe' + staleClass + '" role="img" aria-label="' + attrEscape("Café or shop" + staleNote) + '"><span>💧</span>' + deco + "</div>",
             iconSize: [28, 28],
             iconAnchor: [14, 28],
             popupAnchor: [0, -28]
@@ -92,11 +107,52 @@
         }
         return L.divIcon({
           className: "",
-          html: '<div class="rm-marker fountain' + staleClass + '" title="Public fountain' + staleNote + '"><span>💧</span>' + deco + "</div>",
+          html: '<div class="rm-marker fountain' + staleClass + '" role="img" aria-label="' + attrEscape("Public fountain" + staleNote) + '"><span>💧</span>' + deco + "</div>",
           iconSize: [28, 28],
           iconAnchor: [14, 28],
           popupAnchor: [0, -28]
         });
+      }
+
+      function popupOptions() {
+        const size = map.getSize();
+        const maxHeight = Math.max(160, Math.min(280, size.y - 120));
+        return {
+          maxWidth: 280,
+          maxHeight: maxHeight,
+          autoPan: true,
+          /* Keep the popup clear of the sticky 64px header and the map edge. */
+          autoPanPaddingTopLeft: [20, 88],
+          autoPanPaddingBottomRight: [20, 24]
+        };
+      }
+
+      /* Leaflet binds map "preclick" to close an open popup. On iOS, opening
+       * a popup near the edge auto-pans the map, then a delayed/ghost click
+       * lands on the map and immediately closes it. Hold off that binding
+       * until the pan and the ghost click window have passed. */
+      function protectPopupFromGhostClick(leafletMap, popup) {
+        if (!popup || typeof popup.close !== "function") return;
+        /* Leaflet 1.9 binds map preclick to popup.close via getEvents(). */
+        leafletMap.off("preclick", popup.close, popup);
+        let released = false;
+        let releaseTimer = null;
+        function release() {
+          if (released) return;
+          released = true;
+          if (releaseTimer) clearTimeout(releaseTimer);
+          leafletMap.off("moveend", scheduleRelease);
+          if (popup._map === leafletMap) {
+            leafletMap.on("preclick", popup.close, popup);
+          }
+        }
+        function scheduleRelease() {
+          if (released) return;
+          if (releaseTimer) clearTimeout(releaseTimer);
+          releaseTimer = setTimeout(release, 500);
+        }
+        scheduleRelease();
+        leafletMap.on("moveend", scheduleRelease);
       }
 
       return {
@@ -116,6 +172,11 @@
             showCoverageOnHover: false,
             zoomToBoundsOnClick: true,
             disableClusteringAtZoom: c.clusterDisableZoom || 16,
+            /* Default is true, and on mobile the plugin uses the exact
+             * viewport with no padding. Opening a popup auto-pans so the
+             * pin can sit just off the map, the plugin then removes that
+             * marker, and the popup closes immediately. */
+            removeOutsideVisibleBounds: false, // sipspot-popup-stay-open
             iconCreateFunction: clusterIcon(kind)
           });
           map.addLayer(layer);
@@ -125,16 +186,52 @@
         addMarker: function (groupId, marker) {
           const layer = groups[groupId];
           if (!layer) return;
-          L.marker([marker.lat, marker.lon], {
+          const m = L.marker([marker.lat, marker.lon], {
             icon: markerIcon(marker.kind, marker),
-            title: marker.title || ""
-          })
-            .bindPopup(marker.popupHtml, { maxWidth: 280, autoPanPaddingTopLeft: [16, 72], autoPanPaddingBottomRight: [16, 16] })
-            .addTo(layer);
+            alt: marker.title || "Water refill point",
+            keyboard: true
+          });
+          m._sipspotId = marker.id || (String(marker.lat) + "," + String(marker.lon));
+          m.bindPopup(marker.popupHtml, popupOptions());
+          m.addTo(layer);
+          return m;
         },
         clearGroup: function (groupId) {
           const layer = groups[groupId];
           if (layer) layer.clearLayers();
+        },
+        getOpenPopupId: function () {
+          const popup = map._popup;
+          if (!popup || !map.hasLayer(popup)) return null;
+          const src = popup._source;
+          return (src && src._sipspotId) || null;
+        },
+        openPopupById: function (id) {
+          if (!id) return false;
+          let found = null;
+          let foundLayer = null;
+          Object.keys(groups).forEach(function (gid) {
+            if (found) return;
+            const layer = groups[gid];
+            if (!layer || typeof layer.eachLayer !== "function") return;
+            layer.eachLayer(function (m) {
+              if (found) return;
+              if (m && m._sipspotId === id) {
+                found = m;
+                foundLayer = layer;
+              }
+            });
+          });
+          if (!found) return false;
+          function open() {
+            if (found && found.openPopup) found.openPopup();
+          }
+          if (foundLayer && typeof foundLayer.zoomToShowLayer === "function") {
+            foundLayer.zoomToShowLayer(found, open);
+          } else {
+            open();
+          }
+          return true;
         },
         addUserMarker: function (lat, lon, popupHtml) {
           if (userMarker) map.removeLayer(userMarker);
