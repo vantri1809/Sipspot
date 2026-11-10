@@ -25,7 +25,7 @@ window.SIPSPOT_CONFIG = {
   partnerDataUrl: "/data/partners.geojson",
   mapProvider: "leaflet-osm",
   basemap: "carto-voyager",
-  tilesApiKey: "",
+  tilesApiKey: "cb1_56i5_1_6839c644a0509397bfd4be67",
   googleMapsApiKey: "",
   palette: "Fresh",
   colors: {"primary": "#1E88E5", "leaf": "#43A047", "background": "#E3F2FD", "partner": "#8E24AA"},
@@ -54,7 +54,7 @@ window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
     var base = cfg.basePath || '/';
     return base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
   }
-  var assetVersion = "f9133b1";
+  var assetVersion = "5d4207c";
   function withVersion(url) {
     if (!url) return url;
     if (/^(https?:)?\/\//i.test(url) && url.indexOf(location.origin) !== 0) return url;

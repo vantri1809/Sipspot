@@ -24,7 +24,7 @@
   "partnerDataUrl": "/data/partners.geojson",
   "mapProvider": "leaflet-osm",
   "basemap": "carto-voyager",
-  "tilesApiKey": "",
+  "tilesApiKey": "cb1_56i5_1_6839c644a0509397bfd4be67",
   "googleMapsApiKey": "",
   "palette": "Fresh",
   "colors": {
