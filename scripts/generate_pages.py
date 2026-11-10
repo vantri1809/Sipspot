@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import json
 import math
-from datetime import date
+import subprocess
+from datetime import date, datetime, timezone
 from html import escape
 from pathlib import Path
 
@@ -19,6 +20,9 @@ PLACES_PATH = ROOT / "scripts" / "uk_places.json"
 OSM_PATH = ROOT / "data" / "points.geojson"
 PARTNER_PATH = ROOT / "data" / "partners.geojson"
 CONFIG_PATH = ROOT / "config.json"
+
+# Set in main() before pages are written, so every asset URL shares one stamp.
+ASSET_VERSION = ""
 
 def site_href(path: str = "", depth: int = 0) -> str:
     """Return a relative href that works at the domain root and under a subpath.
@@ -31,6 +35,30 @@ def site_href(path: str = "", depth: int = 0) -> str:
     if not path:
         return prefix if prefix else "./"
     return prefix + path
+
+
+def asset_version() -> str:
+    """Short git hash, or a UTC timestamp if git is unavailable."""
+    try:
+        out = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=ROOT,
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+        if out:
+            return out
+    except (OSError, subprocess.CalledProcessError):
+        pass
+    return datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+
+
+def versioned_href(path: str, depth: int = 0) -> str:
+    """Relative asset href with a ?v= cache-buster for GitHub Pages."""
+    href = site_href(path, depth)
+    ver = ASSET_VERSION
+    sep = "&" if "?" in href else "?"
+    return f"{href}{sep}v={ver}"
 
 
 def load_json(path: Path, default):
@@ -100,11 +128,20 @@ def sync_config_js(cfg: dict) -> None:
     lines.append("    var base = cfg.basePath || '/';")
     lines.append(r"    return base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');")
     lines.append("  }")
+    lines.append(f"  var assetVersion = {json.dumps(ASSET_VERSION)};")
+    lines.append("  function withVersion(url) {")
+    lines.append("    if (!url) return url;")
+    lines.append(r"    if (/^(https?:)?\/\//i.test(url) && url.indexOf(location.origin) !== 0) return url;")
+    lines.append("    if (/[?&]v=/.test(url)) return url;")
+    lines.append("    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'v=' + assetVersion;")
+    lines.append("  }")
     lines.append("  cfg.basePath = detectBasePath();")
+    lines.append("  cfg.assetVersion = assetVersion;")
     lines.append("  cfg.withBase = withBase;")
-    lines.append("  if (cfg.osmDataUrl) cfg.osmDataUrl = withBase(cfg.osmDataUrl);")
-    lines.append("  if (cfg.partnerDataUrl) cfg.partnerDataUrl = withBase(cfg.partnerDataUrl);")
-    lines.append("  if (cfg.feedback && cfg.feedback.dataUrl) cfg.feedback.dataUrl = withBase(cfg.feedback.dataUrl);")
+    lines.append("  cfg.withVersion = withVersion;")
+    lines.append("  if (cfg.osmDataUrl) cfg.osmDataUrl = withVersion(withBase(cfg.osmDataUrl));")
+    lines.append("  if (cfg.partnerDataUrl) cfg.partnerDataUrl = withVersion(withBase(cfg.partnerDataUrl));")
+    lines.append("  if (cfg.feedback && cfg.feedback.dataUrl) cfg.feedback.dataUrl = withVersion(withBase(cfg.feedback.dataUrl));")
     lines.append("})(window.SIPSPOT_CONFIG);")
     lines.append("")
     (ROOT / "js" / "config.js").write_text("\n".join(lines), encoding="utf-8")
@@ -202,7 +239,7 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{site_href('css/style.css', depth)}">{map_css}
+  <link rel="stylesheet" href="{versioned_href('css/style.css', depth)}">{map_css}
   {extra}
 </head>"""
 
@@ -212,9 +249,9 @@ def map_scripts(depth: int = 0) -> str:
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/opening_hours@3.8.0/opening_hours+deps.min.js"></script>
-  <script src="{site_href("js/config.js", depth)}"></script>
-  <script src="{site_href("js/map-provider.js", depth)}"></script>
-  <script src="{site_href("js/app.js", depth)}"></script>"""
+  <script src="{versioned_href("js/config.js", depth)}"></script>
+  <script src="{versioned_href("js/map-provider.js", depth)}"></script>
+  <script src="{versioned_href("js/app.js", depth)}"></script>"""
 
 
 def ad_slot(placement: str, depth: int = 0) -> str:
@@ -554,7 +591,7 @@ def page_cities(cfg, cities) -> str:
     </div>
   </main>
   {footer(cfg, depth)}
-  <script src="{site_href("js/config.js", depth)}"></script>
+  <script src="{versioned_href("js/config.js", depth)}"></script>
 </body>
 </html>"""
 
@@ -588,7 +625,7 @@ def page_privacy(cfg) -> str:
     </div>
   </main>
   {footer(cfg, depth)}
-  <script src="{site_href("js/config.js", depth)}"></script>
+  <script src="{versioned_href("js/config.js", depth)}"></script>
 </body>
 </html>"""
 
@@ -660,8 +697,8 @@ def page_list_business(cfg) -> str:
     </div>
   </main>
   {footer(cfg, depth)}
-  <script src="{site_href("js/config.js", depth)}"></script>
-  <script src="{site_href("js/form.js", depth)}"></script>
+  <script src="{versioned_href("js/config.js", depth)}"></script>
+  <script src="{versioned_href("js/form.js", depth)}"></script>
 </body>
 </html>"""
 
@@ -715,9 +752,12 @@ def write_robots(cfg) -> None:
 
 
 def main() -> int:
+    global ASSET_VERSION
     cfg = load_json(CONFIG_PATH, {})
     if not cfg.get("brand"):
         raise SystemExit("config.json missing or incomplete")
+    ASSET_VERSION = asset_version()
+    print(f"Asset version: {ASSET_VERSION}")
     sync_config_js(cfg)
 
     places = load_json(PLACES_PATH, [])

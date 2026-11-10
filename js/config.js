@@ -54,9 +54,18 @@ window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
     var base = cfg.basePath || '/';
     return base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
   }
+  var assetVersion = "f9133b1";
+  function withVersion(url) {
+    if (!url) return url;
+    if (/^(https?:)?\/\//i.test(url) && url.indexOf(location.origin) !== 0) return url;
+    if (/[?&]v=/.test(url)) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'v=' + assetVersion;
+  }
   cfg.basePath = detectBasePath();
+  cfg.assetVersion = assetVersion;
   cfg.withBase = withBase;
-  if (cfg.osmDataUrl) cfg.osmDataUrl = withBase(cfg.osmDataUrl);
-  if (cfg.partnerDataUrl) cfg.partnerDataUrl = withBase(cfg.partnerDataUrl);
-  if (cfg.feedback && cfg.feedback.dataUrl) cfg.feedback.dataUrl = withBase(cfg.feedback.dataUrl);
+  cfg.withVersion = withVersion;
+  if (cfg.osmDataUrl) cfg.osmDataUrl = withVersion(withBase(cfg.osmDataUrl));
+  if (cfg.partnerDataUrl) cfg.partnerDataUrl = withVersion(withBase(cfg.partnerDataUrl));
+  if (cfg.feedback && cfg.feedback.dataUrl) cfg.feedback.dataUrl = withVersion(withBase(cfg.feedback.dataUrl));
 })(window.SIPSPOT_CONFIG);

@@ -12,7 +12,12 @@
  * CARTO Voyager/Positron when no raster API key is set) lazy-load MapLibre
  * GL through @maplibre/maplibre-gl-leaflet. Pins and clusters stay on Leaflet.
  * The live default is CARTO Voyager on the keyless vector path, because
- * CARTO raster tiles have required a key since 25 September 2026.
+ * CARTO raster tiles have required a key since 25 September 2026 (they
+ * currently return an "API KEY REQUIRED" placeholder). A free key from
+ * https://carto.com/basemaps/apikey/ , stored as tilesApiKey, switches
+ * this site back to Leaflet-native raster tiles, which zoom more smoothly.
+ * Until a key is set, the vector path is tuned for mobile (pixel-ratio
+ * cap, no MapLibre interaction, cluster animation off on coarse pointers).
  *
  * Optional tilesApiKey is appended for providers that require a key
  * (CARTO raster, MapTiler, Stadia in production). Local ?basemap= or
@@ -174,6 +179,23 @@
     };
   }
 
+  function isCoarsePointer() {
+    try {
+      if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) {
+        return true;
+      }
+    } catch (e) { /* ignore */ }
+    return !!(typeof L !== "undefined" && L.Browser && (L.Browser.touch || L.Browser.mobile));
+  }
+
+  function vectorTuneDisabled() {
+    try {
+      return new URLSearchParams(window.location.search).get("vectorTune") === "off";
+    } catch (e) {
+      return false;
+    }
+  }
+
   function loadExternalCss(href) {
     if (document.querySelector('link[href="' + href + '"]')) return;
     const link = document.createElement("link");
@@ -216,6 +238,8 @@
   }
 
   function addRasterLayer(map, basemap) {
+    const container = map.getContainer && map.getContainer();
+    if (container) container._sipspotBasemapType = "raster";
     return L.tileLayer(basemap.tilesUrl, {
       attribution: basemap.attribution,
       maxZoom: basemap.maxZoom,
@@ -239,11 +263,54 @@
         if (typeof L.maplibreGL !== "function") {
           throw new Error("maplibre-gl-leaflet failed to load");
         }
-        const layer = L.maplibreGL({
+        const mobile = isCoarsePointer();
+        const dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;
+        const untuned = vectorTuneDisabled();
+        /* iPhone-class screens report 2–3x DPR. MapLibre paints a canvas
+         * at that ratio, and maplibre-gl-leaflet then calls jumpTo on
+         * every pinch-zoom event. Capping the backing store is the
+         * biggest smoothness win without a raster API key. */
+        const pixelRatio = untuned ? dpr : Math.min(dpr, mobile ? 1.25 : 1.5);
+        const glOptions = {
           style: basemap.styleUrl,
-          attribution: basemap.attribution
-        });
+          attribution: basemap.attribution,
+          interactive: false,
+          attributionControl: false
+        };
+        if (!untuned) {
+          glOptions.updateInterval = mobile ? 48 : 32;
+          glOptions.padding = mobile ? 0 : 0.05;
+          glOptions.pixelRatio = pixelRatio;
+          glOptions.fadeDuration = 0;
+          glOptions.antialias = false;
+          glOptions.trackResize = false;
+          glOptions.boxZoom = false;
+          glOptions.doubleClickZoom = false;
+          glOptions.dragPan = false;
+          glOptions.dragRotate = false;
+          glOptions.keyboard = false;
+          glOptions.scrollZoom = false;
+          glOptions.touchPitch = false;
+          glOptions.touchZoomRotate = false;
+          glOptions.pitchWithRotate = false;
+        }
+        const layer = L.maplibreGL(glOptions);
+        const container = map.getContainer && map.getContainer();
+        if (container) {
+          container._sipspotBasemapType = "vector";
+          container._sipspotVectorTune = untuned ? "off" : "on";
+          container._sipspotPixelRatio = pixelRatio;
+        }
         layer.addTo(map);
+        if (!untuned && mobile && typeof layer._pinchZoom === "function" && L.Util && L.Util.throttle) {
+          layer._pinchZoom = L.Util.throttle(function () {
+            if (!this._glMap || !this._map) return;
+            this._glMap.jumpTo({
+              zoom: this._map.getZoom() - 1,
+              center: this._map.getCenter()
+            });
+          }, 40, layer);
+        }
         return layer;
       })
       .catch(function (err) {
@@ -265,11 +332,13 @@
       }
       const c = cfg();
       const basemap = resolveBasemap(c);
+      const coarse = isCoarsePointer();
       const map = L.map(container, {
         scrollWheelZoom: true,
         attributionControl: true,
         maxZoom: basemap.maxZoom || 19,
-        minZoom: 3
+        minZoom: 3,
+        markerZoomAnimation: !coarse
       });
       map.setView(options.center, options.zoom);
       // Back-reference for tests (not a public API).
@@ -415,6 +484,7 @@
             spiderfyOnMaxZoom: true,
             showCoverageOnHover: false,
             zoomToBoundsOnClick: true,
+            animate: !isCoarsePointer(),
             disableClusteringAtZoom: c.clusterDisableZoom || 16,
             /* Default is true, and on mobile the plugin uses the exact
              * viewport with no padding. Opening a popup auto-pans so the

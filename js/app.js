@@ -256,7 +256,8 @@
   }
 
   function loadFeedbackOverlay() {
-    const url = feedbackConfig().dataUrl || (cfg.withBase ? cfg.withBase("/data/feedback.json") : "data/feedback.json");
+    let url = feedbackConfig().dataUrl || (cfg.withBase ? cfg.withBase("/data/feedback.json") : "data/feedback.json");
+    if (cfg.withVersion) url = cfg.withVersion(url);
     return loadJson(url).then(indexFeedbackOverlay).catch(function () {
       state.feedbackByKey = {};
     });
