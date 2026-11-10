@@ -131,7 +131,7 @@ def nav(cfg, current: str, depth: int = 0) -> str:
     for href, label, key in links:
         cur = ' aria-current="page"' if key == current else ""
         parts.append(f'<a href="{href}"{cur}>{escape(label)}</a>')
-    return '<nav class="nav" aria-label="Site">' + "".join(parts) + "</nav>"
+    return '<nav class="nav" id="site-nav" aria-label="Site">' + "".join(parts) + "</nav>"
 
 
 def header(cfg, current: str, depth: int = 0) -> str:
@@ -147,6 +147,9 @@ def header(cfg, current: str, depth: int = 0) -> str:
         <span class="header-tagline">{tagline}</span>
       </span>
     </a>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle-icon" aria-hidden="true"></span>
+    </button>
     {nav(cfg, current, depth)}
   </div>
 </header>"""
@@ -235,17 +238,16 @@ def affiliate_slot() -> str:
 
 
 def legend() -> str:
-    return """<p class="legend" aria-label="Map key">
+    return """<div class="legend" aria-label="Map key">
   <span><span class="legend-swatch fountain"></span>Public fountain</span>
   <span><span class="legend-swatch cafe"></span>Café or shop</span>
   <span><span class="legend-swatch partner"></span>Cooler partner</span>
   <span><span class="legend-swatch stale"></span><span data-stale-legend>Not updated in 3+ years</span></span>
-</p>"""
+</div>"""
 
 
-def filters() -> str:
-    return """<p class="policy-line">Free for anyone, no purchase needed.</p>
-<div class="filters" role="group" aria-label="Filters">
+def filter_chips() -> str:
+    return """<div class="filters" role="group" aria-label="Filters">
   <button type="button" class="filter-chip fountain" data-filter="public_fountain" aria-pressed="false">Public fountain</button>
   <button type="button" class="filter-chip cafe" data-filter="cafe_refill" aria-pressed="false">Café or shop</button>
   <button type="button" class="filter-chip" data-filter="bottle" aria-pressed="false">Bottle-friendly</button>
@@ -255,6 +257,44 @@ def filters() -> str:
   <button type="button" class="filter-chip partner" data-filter="partner" aria-pressed="false">Cooler partner</button>
   <button type="button" class="filter-chip" data-filter="hide_stale" aria-pressed="false">Hide points not updated in 3+ years</button>
 </div>"""
+
+
+def filters() -> str:
+    """Filters sheet used on map pages. On desktop this is the chip row; on
+    mobile it becomes a bottom sheet opened from the Filters button."""
+    return f"""<div class="filters-sheet" id="filters-sheet">
+  <div class="sheet-chrome">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="filters-title">Filters</h2>
+      <button type="button" class="sheet-close" id="filters-close" aria-label="Close filters"></button>
+    </div>
+  </div>
+  <p class="policy-line">Free for anyone, no purchase needed.</p>
+  {filter_chips()}
+</div>"""
+
+
+def legend_panel() -> str:
+    return f"""<div class="legend-panel" id="legend-panel">
+  <div class="legend-chrome">
+    <h2 class="legend-title">Key</h2>
+    <button type="button" class="sheet-close" id="legend-close" aria-label="Close key"></button>
+  </div>
+  {legend()}
+</div>"""
+
+
+def map_toolbar() -> str:
+    return """<div class="map-toolbar" role="toolbar" aria-label="Map tools">
+  <button type="button" class="map-tool-btn" id="filters-toggle" aria-expanded="false" aria-controls="filters-sheet">Filters</button>
+  <button type="button" class="btn btn-primary js-locate" data-locate-btn>Find water near me</button>
+  <button type="button" class="map-tool-btn" id="legend-toggle" aria-expanded="false" aria-controls="legend-panel">Key</button>
+</div>"""
+
+
+def sheet_backdrop() -> str:
+    return """<div class="sheet-backdrop" id="sheet-backdrop" hidden></div>"""
 
 
 def city_grid(cities, heading="Browse by city", depth: int = 0) -> str:
@@ -289,7 +329,7 @@ def page_index(cfg, cities) -> str:
     url = cfg["siteUrl"].rstrip("/") + "/"
     depth = 0
     return f"""{head(cfg, f"{brand} — {tagline}", desc, url, include_map=True, depth=depth)}
-<body>
+<body class="home-page">
   <a class="skip-link" href="#map">Skip to map</a>
   {header(cfg, "home", depth)}
   <main>
@@ -298,23 +338,30 @@ def page_index(cfg, cities) -> str:
         <h1 class="tagline">{escape(tagline)}</h1>
         <p class="lede">Free drinking water and bottle-fill points across the UK. No app, no account. Free for anyone, no purchase needed. Public fountains and café taps come from OpenStreetMap; cooler partners are listed separately.</p>
         <div class="hero-actions">
-          <button type="button" class="btn btn-primary" id="locate-btn">Find water near me</button>
+          <button type="button" class="btn btn-primary js-locate" id="locate-btn">Find water near me</button>
           <a class="btn btn-ghost" href="{site_href("list-your-business/", depth)}">List your business</a>
         </div>
-        <p class="status" id="status" role="status"></p>
       </div>
     </section>
-    <div class="wrap">
-      {filters()}
-      {legend()}
-      <div class="map-layout">
-        <div class="map-pane"><div id="map" role="application" aria-label="Map of drinking-water points"></div></div>
-        <div class="list-pane">
-          <h2>Points</h2>
-          <p class="results-meta" id="results-meta">Loading…</p>
-          <ul class="result-list" id="result-list"></ul>
+    <div class="map-stage">
+      <div class="wrap map-stage-inner">
+        <p class="status" id="status" role="status"></p>
+        {filters()}
+        {legend_panel()}
+        <div class="map-layout">
+          <div class="map-pane">
+            {map_toolbar()}
+            <div id="map" role="application" aria-label="Map of drinking-water points"></div>
+          </div>
+          <div class="list-pane">
+            <h2>Points</h2>
+            <p class="results-meta" id="results-meta">Loading…</p>
+            <ul class="result-list" id="result-list"></ul>
+          </div>
         </div>
       </div>
+    </div>
+    <div class="wrap below-map">
       <div class="slots">
         {ad_slot("homepage-below-map", depth)}
         {affiliate_slot()}
@@ -322,6 +369,7 @@ def page_index(cfg, cities) -> str:
       {city_grid(cities, "Free water refill points by city", depth=depth)}
     </div>
   </main>
+  {sheet_backdrop()}
   {footer(cfg, depth)}
   {map_scripts(depth)}
 </body>
@@ -427,24 +475,35 @@ def page_city(cfg, city, osm_feats, partner_feats) -> str:
   <a class="skip-link" href="#map">Skip to map</a>
   {header(cfg, "cities", depth)}
   <main class="page-body">
-    <div class="wrap">
+    <div class="wrap city-intro">
       <h1>Free water refill points in {escape(name)}</h1>
       <p class="lede">{city['osm_count']} OpenStreetMap point{"s" if city["osm_count"] != 1 else ""} in and around {escape(name)}.{partner_note}</p>
-      {sponsor_slot(city, partner_feats, depth)}
-      <div class="hero-actions" style="margin-bottom:1rem">
-        <button type="button" class="btn btn-primary" id="locate-btn">Find water near me</button>
+      <div class="hero-actions">
+        <button type="button" class="btn btn-primary js-locate" id="locate-btn">Find water near me</button>
       </div>
       <p class="status" id="status" role="status"></p>
-      {filters()}
-      {legend()}
-      <div class="map-layout">
-        <div class="map-pane"><div id="map" role="application" aria-label="Map of drinking-water points in {escape(name)}"></div></div>
-        <div class="list-pane">
-          <h2>Points in {escape(name)}</h2>
-          <p class="results-meta" id="results-meta">Loading…</p>
-          <ul class="result-list" id="result-list"></ul>
+    </div>
+    <div class="wrap city-sponsor">
+      {sponsor_slot(city, partner_feats, depth)}
+    </div>
+    <div class="map-stage">
+      <div class="wrap map-stage-inner">
+        {filters()}
+        {legend_panel()}
+        <div class="map-layout">
+          <div class="map-pane">
+            {map_toolbar()}
+            <div id="map" role="application" aria-label="Map of drinking-water points in {escape(name)}"></div>
+          </div>
+          <div class="list-pane">
+            <h2>Points in {escape(name)}</h2>
+            <p class="results-meta" id="results-meta">Loading…</p>
+            <ul class="result-list" id="result-list"></ul>
+          </div>
         </div>
       </div>
+    </div>
+    <div class="wrap below-map">
       <div class="slots">
         {ad_slot(f"city-{city['slug']}-below-map", depth)}
         {affiliate_slot()}
@@ -470,6 +529,7 @@ def page_city(cfg, city, osm_feats, partner_feats) -> str:
       </section>
     </div>
   </main>
+  {sheet_backdrop()}
   <script type="application/json" id="city-data">{json.dumps(city_payload, ensure_ascii=False)}</script>
   {footer(cfg, depth)}
   {map_scripts(depth)}

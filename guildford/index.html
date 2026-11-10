@@ -32,24 +32,40 @@
         <span class="header-tagline">Find it. Fill it. Go.</span>
       </span>
     </a>
-    <nav class="nav" aria-label="Site"><a href="../">Map</a><a href="../cities/" aria-current="page">Cities</a><a href="../list-your-business/">List your business</a><a href="../privacy/">Privacy</a></nav>
+    <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle-icon" aria-hidden="true"></span>
+    </button>
+    <nav class="nav" id="site-nav" aria-label="Site"><a href="../">Map</a><a href="../cities/" aria-current="page">Cities</a><a href="../list-your-business/">List your business</a><a href="../privacy/">Privacy</a></nav>
   </div>
 </header>
   <main class="page-body">
-    <div class="wrap">
+    <div class="wrap city-intro">
       <h1>Free water refill points in Guildford</h1>
       <p class="lede">15 OpenStreetMap points in and around Guildford.</p>
+      <div class="hero-actions">
+        <button type="button" class="btn btn-primary js-locate" id="locate-btn">Find water near me</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+    </div>
+    <div class="wrap city-sponsor">
       <aside class="sponsor-slot">
   <p class="label">Sponsorship</p>
   <h2>Sponsorship available for Guildford</h2>
   <p>Water cooler companies and local businesses can be listed as cooler partners. <a href="../list-your-business/">List your business</a>.</p>
 </aside>
-      <div class="hero-actions" style="margin-bottom:1rem">
-        <button type="button" class="btn btn-primary" id="locate-btn">Find water near me</button>
-      </div>
-      <p class="status" id="status" role="status"></p>
-      <p class="policy-line">Free for anyone, no purchase needed.</p>
-<div class="filters" role="group" aria-label="Filters">
+    </div>
+    <div class="map-stage">
+      <div class="wrap map-stage-inner">
+        <div class="filters-sheet" id="filters-sheet">
+  <div class="sheet-chrome">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="filters-title">Filters</h2>
+      <button type="button" class="sheet-close" id="filters-close" aria-label="Close filters"></button>
+    </div>
+  </div>
+  <p class="policy-line">Free for anyone, no purchase needed.</p>
+  <div class="filters" role="group" aria-label="Filters">
   <button type="button" class="filter-chip fountain" data-filter="public_fountain" aria-pressed="false">Public fountain</button>
   <button type="button" class="filter-chip cafe" data-filter="cafe_refill" aria-pressed="false">Café or shop</button>
   <button type="button" class="filter-chip" data-filter="bottle" aria-pressed="false">Bottle-friendly</button>
@@ -59,20 +75,37 @@
   <button type="button" class="filter-chip partner" data-filter="partner" aria-pressed="false">Cooler partner</button>
   <button type="button" class="filter-chip" data-filter="hide_stale" aria-pressed="false">Hide points not updated in 3+ years</button>
 </div>
-      <p class="legend" aria-label="Map key">
+</div>
+        <div class="legend-panel" id="legend-panel">
+  <div class="legend-chrome">
+    <h2 class="legend-title">Key</h2>
+    <button type="button" class="sheet-close" id="legend-close" aria-label="Close key"></button>
+  </div>
+  <div class="legend" aria-label="Map key">
   <span><span class="legend-swatch fountain"></span>Public fountain</span>
   <span><span class="legend-swatch cafe"></span>Café or shop</span>
   <span><span class="legend-swatch partner"></span>Cooler partner</span>
   <span><span class="legend-swatch stale"></span><span data-stale-legend>Not updated in 3+ years</span></span>
-</p>
-      <div class="map-layout">
-        <div class="map-pane"><div id="map" role="application" aria-label="Map of drinking-water points in Guildford"></div></div>
-        <div class="list-pane">
-          <h2>Points in Guildford</h2>
-          <p class="results-meta" id="results-meta">Loading…</p>
-          <ul class="result-list" id="result-list"></ul>
+</div>
+</div>
+        <div class="map-layout">
+          <div class="map-pane">
+            <div class="map-toolbar" role="toolbar" aria-label="Map tools">
+  <button type="button" class="map-tool-btn" id="filters-toggle" aria-expanded="false" aria-controls="filters-sheet">Filters</button>
+  <button type="button" class="btn btn-primary js-locate" data-locate-btn>Find water near me</button>
+  <button type="button" class="map-tool-btn" id="legend-toggle" aria-expanded="false" aria-controls="legend-panel">Key</button>
+</div>
+            <div id="map" role="application" aria-label="Map of drinking-water points in Guildford"></div>
+          </div>
+          <div class="list-pane">
+            <h2>Points in Guildford</h2>
+            <p class="results-meta" id="results-meta">Loading…</p>
+            <ul class="result-list" id="result-list"></ul>
+          </div>
         </div>
       </div>
+    </div>
+    <div class="wrap below-map">
       <div class="slots">
         <aside class="ad-slot" data-ad-placement="city-guildford-below-map" aria-label="Advertisement">
   <p class="label">Advertisement</p>
@@ -110,6 +143,7 @@
       </section>
     </div>
   </main>
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
   <script type="application/json" id="city-data">{"slug": "guildford", "name": "Guildford", "lat": 51.2365, "lon": -0.5703, "radius_km": 7, "zoom": 12}</script>
   <footer class="site-footer">
   <div class="footer-inner">

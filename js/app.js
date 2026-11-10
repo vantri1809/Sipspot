@@ -819,15 +819,20 @@
     if (!el) return;
     el.textContent = msg || "";
     el.classList.toggle("error", !!isError);
+    const toast = !!(msg && (isError || !/^Loaded \d/.test(msg)));
+    el.classList.toggle("is-toast", toast);
+  }
+
+  function locateButtons() {
+    return $all("#locate-btn, .js-locate, [data-locate-btn]");
   }
 
   function setLocateState(mode) {
-    const btn = $("#locate-btn");
-    if (btn) {
+    locateButtons().forEach(function (btn) {
       btn.disabled = mode === "locating";
       btn.classList.toggle("is-locating", mode === "locating");
       btn.classList.toggle("is-active", mode === "active");
-    }
+    });
     if (state.map && state.map.setLocateState) state.map.setLocateState(mode);
   }
 
@@ -901,6 +906,165 @@
     }
   }
 
+  function isNarrow() {
+    return window.matchMedia("(max-width: 640px)").matches;
+  }
+
+  function activeFilterCount() {
+    return Object.keys(state.filters).reduce(function (n, key) {
+      return n + (state.filters[key] ? 1 : 0);
+    }, 0);
+  }
+
+  function updateFilterBadge() {
+    const btn = $("#filters-toggle");
+    if (!btn) return;
+    const n = activeFilterCount();
+    btn.textContent = n ? "Filters (" + n + ")" : "Filters";
+    if (n) btn.setAttribute("data-count", String(n));
+    else btn.removeAttribute("data-count");
+  }
+
+  function setNavOpen(open) {
+    const toggle = $("#nav-toggle");
+    const nav = $("#site-nav");
+    if (!toggle || !nav) return;
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    nav.classList.toggle("is-open", open);
+    document.body.classList.toggle("nav-open", open);
+  }
+
+  function setFiltersOpen(open) {
+    const sheet = $("#filters-sheet");
+    const backdrop = $("#sheet-backdrop");
+    const btn = $("#filters-toggle");
+    if (!sheet || !btn) return;
+    const mobile = isNarrow();
+    const show = open && mobile;
+    sheet.classList.toggle("is-open", show);
+    sheet.setAttribute("role", mobile ? "dialog" : "presentation");
+    if (mobile) {
+      sheet.setAttribute("aria-modal", show ? "true" : "false");
+      sheet.setAttribute("aria-labelledby", "filters-title");
+      sheet.setAttribute("aria-hidden", show ? "false" : "true");
+    } else {
+      sheet.removeAttribute("aria-modal");
+      sheet.removeAttribute("aria-hidden");
+      sheet.removeAttribute("aria-labelledby");
+    }
+    btn.setAttribute("aria-expanded", show ? "true" : "false");
+    if (backdrop) {
+      if (show) backdrop.removeAttribute("hidden");
+      else backdrop.setAttribute("hidden", "");
+    }
+    document.body.classList.toggle("sheet-open", show);
+    if (show) {
+      const close = $("#filters-close");
+      if (close) close.focus();
+    } else if (mobile && document.activeElement && sheet.contains(document.activeElement)) {
+      btn.focus();
+    }
+  }
+
+  function setLegendOpen(open) {
+    const panel = $("#legend-panel");
+    const btn = $("#legend-toggle");
+    if (!panel) return;
+    const mobile = isNarrow();
+    const show = open && mobile;
+    panel.classList.toggle("is-open", show);
+    if (mobile) panel.setAttribute("aria-hidden", show ? "false" : "true");
+    else panel.removeAttribute("aria-hidden");
+    if (btn) btn.setAttribute("aria-expanded", show ? "true" : "false");
+    if (show) {
+      const close = $("#legend-close");
+      if (close) close.focus();
+    } else if (mobile && btn && document.activeElement && panel.contains(document.activeElement)) {
+      btn.focus();
+    }
+  }
+
+  function closeOverlays() {
+    setNavOpen(false);
+    setFiltersOpen(false);
+    setLegendOpen(false);
+  }
+
+  function initChrome() {
+    const navToggle = $("#nav-toggle");
+    if (navToggle) {
+      navToggle.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const open = navToggle.getAttribute("aria-expanded") !== "true";
+        if (open) {
+          setFiltersOpen(false);
+          setLegendOpen(false);
+        }
+        setNavOpen(open);
+      });
+    }
+    const filtersToggle = $("#filters-toggle");
+    if (filtersToggle) {
+      filtersToggle.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const open = filtersToggle.getAttribute("aria-expanded") !== "true";
+        if (open) {
+          setNavOpen(false);
+          setLegendOpen(false);
+        }
+        setFiltersOpen(open);
+      });
+    }
+    const legendToggle = $("#legend-toggle");
+    if (legendToggle) {
+      legendToggle.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const open = legendToggle.getAttribute("aria-expanded") !== "true";
+        if (open) {
+          setNavOpen(false);
+          setFiltersOpen(false);
+        }
+        setLegendOpen(open);
+      });
+    }
+    const filtersClose = $("#filters-close");
+    if (filtersClose) filtersClose.addEventListener("click", function () { setFiltersOpen(false); });
+    const legendClose = $("#legend-close");
+    if (legendClose) legendClose.addEventListener("click", function () { setLegendOpen(false); });
+    const backdrop = $("#sheet-backdrop");
+    if (backdrop) backdrop.addEventListener("click", function () { setFiltersOpen(false); });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      closeOverlays();
+    });
+    document.addEventListener("click", function (e) {
+      const t = e.target;
+      if (document.body.classList.contains("nav-open") && !(t.closest && t.closest(".site-header"))) {
+        setNavOpen(false);
+      }
+      const legend = $("#legend-panel");
+      if (legend && legend.classList.contains("is-open") && !(t.closest && t.closest("#legend-panel, #legend-toggle"))) {
+        setLegendOpen(false);
+      }
+    });
+    window.addEventListener("resize", function () {
+      if (!isNarrow()) closeOverlays();
+      const mapEl = $("#map");
+      if (mapEl && mapEl._sipspotLeafletMap && mapEl._sipspotLeafletMap.invalidateSize) {
+        mapEl._sipspotLeafletMap.invalidateSize();
+      }
+    });
+    updateFilterBadge();
+    if (isNarrow()) {
+      const sheet = $("#filters-sheet");
+      const panel = $("#legend-panel");
+      if (sheet) sheet.setAttribute("aria-hidden", "true");
+      if (panel) panel.setAttribute("aria-hidden", "true");
+    }
+  }
+
   function initFilters() {
     $all("[data-filter]").forEach((chip) => {
       chip.addEventListener("click", () => {
@@ -908,6 +1072,7 @@
         const next = chip.getAttribute("aria-pressed") !== "true";
         chip.setAttribute("aria-pressed", next ? "true" : "false");
         state.filters[key] = next;
+        updateFilterBadge();
         refresh();
       });
     });
@@ -943,6 +1108,7 @@
     }
     if (!$("#map")) return;
     initMap();
+    initChrome();
     initFilters();
     initDirections();
     applyStaleLabels();
@@ -952,8 +1118,9 @@
     if (state.map && state.map.onDragStart) {
       state.map.onDragStart(function () { state.locateRecenter = false; });
     }
-    const locateBtn = $("#locate-btn");
-    if (locateBtn) locateBtn.addEventListener("click", locate);
+    locateButtons().forEach(function (btn) {
+      btn.addEventListener("click", locate);
+    });
 
     setStatus("Loading map data…");
     Promise.all([
@@ -966,7 +1133,7 @@
       refresh();
       const o = state.city ? visibleOsm().length : state.osmFeatures.length;
       const p = state.city ? visiblePartners().length : state.partnerFeatures.length;
-      setStatus("Loaded " + o + " OpenStreetMap points" + (p ? " and " + p + " partner listings." : ".") + " Free for anyone, no purchase needed.");
+      setStatus("Loaded " + o + " OpenStreetMap point" + (o === 1 ? "" : "s") + (p ? " and " + p + " partner listing" + (p === 1 ? "" : "s") : "") + ".");
     }).catch((err) => {
       setStatus("Could not load map data. " + err.message, true);
     });
