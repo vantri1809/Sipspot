@@ -184,6 +184,11 @@ def apply_osm_attributes(props: dict, tags: dict | None = None) -> dict:
     return props
 
 
+# OSM nodes hidden by hand: mapping duplicates (e.g. 15 unnamed fountains at
+# Sayer Court, Peterborough; only 5831980249 is kept). Hidden 11 Nov 2026.
+HIDDEN_OSM_IDS = {5831980250, 5832597972, 5832597973, 5832597974, 5832597975, 5832597976, 5832597977, 5832597978, 5832597979, 5832597980, 5832597981, 5832597982, 5832597983, 5832597984}
+
+
 def postprocess_osm_geojson(path: Path) -> dict:
     """Drop paid points and attach water_type / chilled on an existing OSM file."""
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -191,6 +196,8 @@ def postprocess_osm_geojson(path: Path) -> dict:
     skipped_fee = 0
     for feat in data.get("features") or []:
         props = feat.get("properties") or {}
+        if props.get("osm_id") in HIDDEN_OSM_IDS:
+            continue
         if is_excluded_osm(props) or is_excluded_osm(osm_tags_from_props(props)):
             skipped_fee += 1
             continue
