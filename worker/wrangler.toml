@@ -4,7 +4,7 @@
 name = "sipspot-api"
 main = "src/index.js"
 compatibility_date = "2026-11-01"
-workers_dev = true
+workers_dev = false
 
 # Served on its own subdomain so the apex can stay DNS-only to GitHub Pages.
 routes = [
@@ -19,8 +19,8 @@ watch_dir = "../data"
 [[d1_databases]]
 binding = "DB"
 database_name = "sipspot-api"
-# Replace with the id printed by `wrangler d1 create sipspot-api`.
-database_id = "00000000-0000-0000-0000-000000000000"
+# Created with `wrangler d1 create sipspot-api` (WEUR).
+database_id = "259dd053-dc2a-4d59-8aad-6e0d26ba30b7"
 
 [triggers]
 # Hourly clean-up of expired throttle keys.

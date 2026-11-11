@@ -33,7 +33,7 @@ window.SIPSPOT_CONFIG = {
   metaDescription: "Find it. Fill it. Go. Free drinking water and bottle-fill points across the UK. No app, no account.",
   staleAfterMonths: 36,
   feedback: {"enabled": true, "endpoint": null, "dataUrl": "/data/feedback.json"},
-  apiBase: ""
+  apiBase: "https://api.sipspot.co.uk"
 };
 window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
 
@@ -55,7 +55,7 @@ window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
     var base = cfg.basePath || '/';
     return base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
   }
-  var assetVersion = "26f2613";
+  var assetVersion = "cdcf7a4";
   function withVersion(url) {
     if (!url) return url;
     if (/^(https?:)?\/\//i.test(url) && url.indexOf(location.origin) !== 0) return url;

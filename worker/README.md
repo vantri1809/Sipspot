@@ -49,6 +49,10 @@ API_BASE=http://127.0.0.1:8787 npm test
 5. Set `"apiBase": "https://api.sipspot.co.uk"` in `config.json`, run
    `python3 scripts/generate_pages.py`, commit and push.
 
+Deployed 11 Nov 2026: D1 `sipspot-api` (WEUR), custom domain `api.sipspot.co.uk`,
+hourly cron. `workers_dev = false` (not served on workers.dev), but the account
+needs a workers.dev subdomain registered for cron triggers to deploy.
+
 Until `apiBase` is set the site hides the refill button and counters, and
 Still here / Gone keep working in the browser only.
 
