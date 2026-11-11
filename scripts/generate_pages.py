@@ -116,7 +116,7 @@ def sync_config_js(cfg: dict) -> None:
     lines.append("    var scripts = document.getElementsByTagName('script');")
     lines.append("    for (var i = 0; i < scripts.length; i++) {")
     lines.append("      var src = scripts[i].getAttribute('src') || '';")
-    lines.append(r"      if (!/(?:^|\/)js\/(?:config|app|form|map-provider)\.js(?:\?|$)/.test(src)) continue;")
+    lines.append(r"      if (!/(?:^|\/)js\/(?:config|app|form|map-provider|pwa)\.js(?:\?|$)/.test(src)) continue;")
     lines.append("      var url = new URL(src, document.baseURI);")
     lines.append(r"      return url.pathname.replace(/\/js\/[^/]+$/, '/');")
     lines.append("    }")
@@ -238,6 +238,12 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
   <meta property="og:locale" content="en_GB">
   <meta name="theme-color" content="#1E88E5">
   <link rel="icon" href="{site_href("favicon.ico", depth)}" type="image/x-icon">
+  <link rel="manifest" href="{site_href("manifest.webmanifest", depth)}">
+  <link rel="apple-touch-icon" href="{site_href("icons/apple-touch-icon.png", depth)}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="{brand}">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
@@ -253,7 +259,8 @@ def map_scripts(depth: int = 0) -> str:
   <script src="https://cdn.jsdelivr.net/npm/opening_hours@3.8.0/opening_hours+deps.min.js"></script>
   <script src="{versioned_href("js/config.js", depth)}"></script>
   <script src="{versioned_href("js/map-provider.js", depth)}"></script>
-  <script src="{versioned_href("js/app.js", depth)}"></script>"""
+  <script src="{versioned_href("js/app.js", depth)}"></script>
+  <script src="{versioned_href("js/pwa.js", depth)}"></script>"""
 
 
 def legend() -> str:
@@ -730,6 +737,7 @@ def page_cities(cfg, cities) -> str:
   </main>
   {footer(cfg, depth)}
   <script src="{versioned_href("js/config.js", depth)}"></script>
+  <script src="{versioned_href("js/pwa.js", depth)}"></script>
 </body>
 </html>"""
 
@@ -753,6 +761,7 @@ def page_privacy(cfg) -> str:
       <p>The site is a set of static files. We do not run a user database, and we have not installed any analytics.</p>
       <p>If you use the “List your business” form, it opens your own email app with the details you typed and addresses the message to {email}. We only see that information if you send the email. Please do not include a password or payment details. We will use what you send only to follow up about a listing.</p>
       <p>We do not set cookies. The “Still here” and “Gone” buttons on a map point store your choice in your browser’s local storage (not a cookie), so the same point does not ask again on this device. That vote is not sent to us, because no feedback server is set up yet.</p>
+      <p>If you dismiss the “Install app” tip, that choice is also stored in your browser’s local storage, so we do not show it again on this device.</p>
       <h2>Location</h2>
       <p>If you tap “Find water near me”, your browser may share your location with this page so the map can centre on you and estimate a walking distance. That location stays in your browser. It is not sent to us.</p>
       <h2>Map tiles, directions and other services</h2>
@@ -770,6 +779,7 @@ def page_privacy(cfg) -> str:
   </main>
   {footer(cfg, depth)}
   <script src="{versioned_href("js/config.js", depth)}"></script>
+  <script src="{versioned_href("js/pwa.js", depth)}"></script>
 </body>
 </html>"""
 
@@ -794,6 +804,7 @@ def page_terms(cfg) -> str:
   </main>
   {footer(cfg, depth)}
   <script src="{versioned_href("js/config.js", depth)}"></script>
+  <script src="{versioned_href("js/pwa.js", depth)}"></script>
 </body>
 </html>"""
 
@@ -867,6 +878,7 @@ def page_list_business(cfg) -> str:
   {footer(cfg, depth)}
   <script src="{versioned_href("js/config.js", depth)}"></script>
   <script src="{versioned_href("js/form.js", depth)}"></script>
+  <script src="{versioned_href("js/pwa.js", depth)}"></script>
 </body>
 </html>"""
 
@@ -920,6 +932,23 @@ def write_robots(cfg) -> None:
     write(ROOT / "robots.txt", f"User-agent: *\nAllow: /\nSitemap: {sitemap}\n")
 
 
+
+def sync_service_worker_version() -> None:
+    """Keep sw.js CACHE_VERSION in line with the site-wide ?v= stamp."""
+    path = ROOT / "sw.js"
+    if not path.is_file():
+        raise SystemExit("sw.js is missing; cannot stamp the service worker cache")
+    text = path.read_text(encoding="utf-8")
+    needle = "const CACHE_VERSION = "
+    start = text.find(needle)
+    if start < 0:
+        raise SystemExit("Could not update CACHE_VERSION in sw.js")
+    end = text.find("\n", start)
+    updated = text[:start] + f'{needle}"{ASSET_VERSION}";' + text[end:]
+    if updated != text:
+        path.write_text(updated, encoding="utf-8")
+
+
 def main() -> int:
     global ASSET_VERSION
     cfg = load_json(CONFIG_PATH, {})
@@ -928,6 +957,7 @@ def main() -> int:
     ASSET_VERSION = asset_version()
     print(f"Asset version: {ASSET_VERSION}")
     sync_config_js(cfg)
+    sync_service_worker_version()
 
     places = load_json(PLACES_PATH, [])
     osm = load_json(OSM_PATH, {}).get("features") or []

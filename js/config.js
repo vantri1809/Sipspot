@@ -42,7 +42,7 @@ window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
     var scripts = document.getElementsByTagName('script');
     for (var i = 0; i < scripts.length; i++) {
       var src = scripts[i].getAttribute('src') || '';
-      if (!/(?:^|\/)js\/(?:config|app|form|map-provider)\.js(?:\?|$)/.test(src)) continue;
+      if (!/(?:^|\/)js\/(?:config|app|form|map-provider|pwa)\.js(?:\?|$)/.test(src)) continue;
       var url = new URL(src, document.baseURI);
       return url.pathname.replace(/\/js\/[^/]+$/, '/');
     }
@@ -54,7 +54,7 @@ window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
     var base = cfg.basePath || '/';
     return base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
   }
-  var assetVersion = "bfdce04";
+  var assetVersion = "0513226";
   function withVersion(url) {
     if (!url) return url;
     if (/^(https?:)?\/\//i.test(url) && url.indexOf(location.origin) !== 0) return url;
