@@ -41,5 +41,5 @@
     "endpoint": null,
     "dataUrl": "/data/feedback.json"
   },
-  "apiBase": ""
+  "apiBase": "https://api.sipspot.co.uk"
 }
