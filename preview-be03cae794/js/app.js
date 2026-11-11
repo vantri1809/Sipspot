@@ -757,7 +757,7 @@
 
     const osmCount = osmItems.length;
     const partnerCount = partnerItems.length;
-    let summary = osmCount + " OpenStreetMap point" + (osmCount === 1 ? "" : "s");
+    let summary = osmCount + " drinking point" + (osmCount === 1 ? "" : "s");
     if (partnerCount) {
       summary += " and " + partnerCount + " cooler partner" + (partnerCount === 1 ? "" : "s");
     }
@@ -1139,7 +1139,7 @@
       refresh();
       const o = state.city ? visibleOsm().length : state.osmFeatures.length;
       const p = state.city ? visiblePartners().length : state.partnerFeatures.length;
-      setStatus("Loaded " + o + " OpenStreetMap point" + (o === 1 ? "" : "s") + (p ? " and " + p + " partner listing" + (p === 1 ? "" : "s") : "") + ".");
+      setStatus("Loaded " + o + " drinking point" + (o === 1 ? "" : "s") + (p ? " and " + p + " partner listing" + (p === 1 ? "" : "s") : "") + ".");
     }).catch((err) => {
       setStatus("Could not load map data. " + err.message, true);
     });
