@@ -1,0 +1,8 @@
+{
+  "type": "FeatureCollection",
+  "name": "SipSpot partner businesses",
+  "source": "partners",
+  "licence": "Not an OSM derivative. Do not merge with data/points.geojson.",
+  "note": "This layer is kept strictly separate from OpenStreetMap data to avoid ODbL share-alike applying to the partner list. Each listing has water_type (tap, filtered, chilled_filtered, unknown) and chilled (true/false/null). The site loads this file independently from data/points.geojson.",
+  "features": []
+}
