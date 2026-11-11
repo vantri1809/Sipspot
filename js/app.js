@@ -284,8 +284,13 @@
 
   function pointInCity(lat, lon, city) {
     if (!city) return true;
-    const km = haversineMetres(lat, lon, city.lat, city.lon) / 1000;
-    return km <= city.radius_km;
+    const centres = (city.centres && city.centres.length)
+      ? city.centres
+      : [{ lat: city.lat, lon: city.lon, radius_km: city.radius_km }];
+    return centres.some(function (c) {
+      const km = haversineMetres(lat, lon, c.lat, c.lon) / 1000;
+      return km <= c.radius_km;
+    });
   }
 
   function isPaid(props) {

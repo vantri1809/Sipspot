@@ -9,7 +9,7 @@ window.SIPSPOT_CONFIG = {
   siteUrl: "https://sipspot.co.uk",
   locale: "en-GB",
   tagline: "Find it. Fill it. Go.",
-  contactEmail: "hello@sipspot.uk",
+  contactEmail: "hello@sipspot.co.uk",
   partnerFormEndpoint: "",
   osmAttributionText: "© OpenStreetMap contributors",
   osmAttributionUrl: "https://www.openstreetmap.org/copyright",
@@ -54,7 +54,7 @@ window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
     var base = cfg.basePath || '/';
     return base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
   }
-  var assetVersion = "b1cfcc3";
+  var assetVersion = "2320329";
   function withVersion(url) {
     if (!url) return url;
     if (/^(https?:)?\/\//i.test(url) && url.indexOf(location.origin) !== 0) return url;

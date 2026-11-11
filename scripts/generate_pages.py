@@ -205,7 +205,8 @@ def footer(cfg, depth: int = 0) -> str:
     <p>
       <a href="{site_href("cities/", depth)}">Cities</a> ·
       <a href="{site_href("list-your-business/", depth)}">List your business</a> ·
-      <a href="{site_href("privacy/", depth)}">Privacy</a>
+      <a href="{site_href("privacy/", depth)}">Privacy</a> ·
+      <a href="{site_href("terms/", depth)}">Terms</a>
     </p>
   </div>
 </footer>"""
@@ -236,6 +237,7 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_GB">
   <meta name="theme-color" content="#1E88E5">
+  <link rel="icon" href="{site_href("favicon.ico", depth)}" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
@@ -252,26 +254,6 @@ def map_scripts(depth: int = 0) -> str:
   <script src="{versioned_href("js/config.js", depth)}"></script>
   <script src="{versioned_href("js/map-provider.js", depth)}"></script>
   <script src="{versioned_href("js/app.js", depth)}"></script>"""
-
-
-def ad_slot(placement: str, depth: int = 0) -> str:
-    return f"""<aside class="ad-slot" data-ad-placement="{escape(placement)}" aria-label="Advertisement">
-  <p class="label">Advertisement</p>
-  <p>AdSense slot — {escape(placement)}. Not shown over the map. A cookie consent banner must be added before ads go live. See the <a href="{site_href("privacy/", depth)}">privacy page</a>.</p>
-</aside>"""
-
-
-def affiliate_slot() -> str:
-    return """<aside class="affiliate-slot" aria-label="Recommended reusable bottles">
-  <p class="label">Affiliate</p>
-  <h2>Recommended reusable bottles</h2>
-  <p>Placeholder for affiliate links to reusable bottles. Replace with your chosen programme (for example Amazon Associates) before launch. Disclose affiliate relationships on the privacy page.</p>
-  <div class="affiliate-items">
-    <div class="affiliate-item">Bottle 1 — placeholder</div>
-    <div class="affiliate-item">Bottle 2 — placeholder</div>
-    <div class="affiliate-item">Bottle 3 — placeholder</div>
-  </div>
-</aside>"""
 
 
 def legend() -> str:
@@ -399,10 +381,6 @@ def page_index(cfg, cities) -> str:
       </div>
     </div>
     <div class="wrap below-map">
-      <div class="slots">
-        {ad_slot("homepage-below-map", depth)}
-        {affiliate_slot()}
-      </div>
       {city_grid(cities, "Free water refill points by city", depth=depth)}
     </div>
   </main>
@@ -455,33 +433,186 @@ def faq_jsonld(city_name: str, osm_count: int) -> str:
     return json.dumps(blob, ensure_ascii=False)
 
 
+def feature_key(feat) -> tuple:
+    props = feat.get("properties") or {}
+    return (props.get("osm_type"), props.get("osm_id"), props.get("id"), id(feat) if not (props.get("osm_type") or props.get("osm_id") or props.get("id")) else None)
+
+
+def union_features(*groups):
+    seen = set()
+    out = []
+    for feats in groups:
+        for feat in feats or []:
+            key = feature_key(feat)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(feat)
+    return out
+
+
+CITY_MERGES = {
+    "manchester": {"absorb": ("salford",), "name": "Manchester and Salford"},
+    "bournemouth": {"absorb": ("poole",), "name": "Bournemouth and Poole"},
+}
+
+
+def apply_city_merges(cities):
+    """Merge neighbouring city pages and return (public_cities, redirects)."""
+    by_slug = {c["slug"]: c for c in cities}
+    redirects = {}
+    for keep, spec in CITY_MERGES.items():
+        host = by_slug.get(keep)
+        if not host:
+            continue
+        centres = [{"lat": host["lat"], "lon": host["lon"], "radius_km": host["radius_km"]}]
+        for slug in spec["absorb"]:
+            other = by_slug.get(slug)
+            if not other:
+                continue
+            host["_osm"] = union_features(host.get("_osm"), other.get("_osm"))
+            host["_partners"] = union_features(host.get("_partners"), other.get("_partners"))
+            centres.append({"lat": other["lat"], "lon": other["lon"], "radius_km": other["radius_km"]})
+            redirects[slug] = keep
+        host["name"] = spec["name"]
+        host["centres"] = centres
+        host["osm_count"] = len(host.get("_osm") or [])
+        host["partner_count"] = len(host.get("_partners") or [])
+        host["lat"] = sum(c["lat"] for c in centres) / len(centres)
+        host["lon"] = sum(c["lon"] for c in centres) / len(centres)
+    public = [c for c in cities if c["slug"] not in redirects]
+    public.sort(key=lambda c: c["name"])
+    return public, redirects
+
+
+def category_counts(feats) -> dict:
+    counts = {"public_fountain": 0, "cafe_refill": 0, "other": 0}
+    for feat in feats or []:
+        cat = (feat.get("properties") or {}).get("category") or "other"
+        if cat not in counts:
+            cat = "other"
+        counts[cat] += 1
+    return counts
+
+
+def city_intro_paragraphs(city, all_cities) -> list[str]:
+    """2–3 short sentences from our own counts only. No invented claims."""
+    name = city["name"]
+    n = city["osm_count"]
+    pts = "point" if n == 1 else "points"
+    cats = category_counts(city.get("_osm"))
+    fountains = cats["public_fountain"]
+    cafes = cats["cafe_refill"]
+    if fountains and cafes:
+        mix = (
+            f"{fountains} are public fountains, taps or bottle-refill points, "
+            f"and {cafes} {'is a' if cafes == 1 else 'are'} café or shop refill"
+            f"{'' if cafes == 1 else 's'}."
+        )
+    elif fountains:
+        mix = f"{fountains} are public fountains, taps or bottle-refill points."
+    elif cafes:
+        mix = f"{cafes} {'is a' if cafes == 1 else 'are'} café or shop refill{'' if cafes == 1 else 's'}."
+    else:
+        mix = ""
+
+    slug = city["slug"]
+    if slug == "london":
+        largest = max((c["osm_count"] for c in all_cities), default=0)
+        lead = f"London has {n} OpenStreetMap drinking-water {pts} on SipSpot"
+        if n >= largest:
+            lead += ", more than any other city in our gazetteer"
+        lead += "."
+        paras = [lead]
+        if cafes:
+            paras.append(
+                f"Almost all are public fountains, taps or bottle-refill points; {cafes} are café or shop refills."
+            )
+        elif mix:
+            paras.append(mix)
+        r = city.get("radius_km")
+        if r:
+            rtxt = int(r) if float(r).is_integer() else r
+            paras.append(f"The map covers points within {rtxt} km of the centre.")
+        return paras
+    if slug in ("manchester", "bournemouth"):
+        paras = [f"{name} have {n} OpenStreetMap drinking-water {pts} on SipSpot."]
+        if mix:
+            paras.append(mix)
+        if slug == "manchester":
+            paras.append("This page covers both Manchester and Salford, and the old Salford address now brings you here.")
+        else:
+            paras.append("This page covers both Bournemouth and Poole, and the old Poole address now brings you here.")
+        return paras
+    if slug in ("bristol", "birmingham", "cardiff"):
+        r = city.get("radius_km")
+        rtxt = int(r) if r is not None and float(r).is_integer() else r
+        paras = [f"{name} has {n} OpenStreetMap drinking-water {pts} on SipSpot, within {rtxt} km of the centre."]
+        if mix:
+            paras.append(mix)
+        return paras
+    return []
+
+
+def breadcrumb_jsonld(cfg, city) -> str:
+    base = cfg["siteUrl"].rstrip("/")
+    blob = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": base + "/"},
+            {"@type": "ListItem", "position": 2, "name": "Cities", "item": base + "/cities/"},
+            {"@type": "ListItem", "position": 3, "name": city["name"], "item": base + f"/{city['slug']}/"},
+        ],
+    }
+    return json.dumps(blob, ensure_ascii=False)
+
+
 def sponsor_slot(city, partners, depth: int = 0) -> str:
-    real = [p for p in partners if not (p.get("properties") or {}).get("is_example")]
-    examples = [p for p in partners if (p.get("properties") or {}).get("is_example")]
+    """Render a per-city sponsor strip only when there is a real sponsor."""
     companies = []
-    for p in (real or examples):
-        name = (p.get("properties") or {}).get("partner")
+    for p in partners or []:
+        props = p.get("properties") or {}
+        if props.get("is_example"):
+            continue
+        name = props.get("partner")
         if name and name not in companies:
             companies.append(name)
-    note = ""
-    if not real and examples:
-        note = '<p class="example-note">This sponsorship line is driven by example partner data and must be removed or replaced before launch.</p>'
-    if companies:
-        label = " and ".join(escape(c) for c in companies)
-        return f"""<aside class="sponsor-slot">
-  <p class="label">Sponsorship</p>
-  {note}
+    if not companies:
+        return ""
+    label = " and ".join(escape(c) for c in companies)
+    return f"""<aside class="sponsor-slot">
+  <p class="label">Sponsored</p>
   <h2>Sponsored by {label}</h2>
   <p>Cooler partners in {escape(city["name"])} help people fill a bottle for free.</p>
 </aside>"""
-    return f"""<aside class="sponsor-slot">
-  <p class="label">Sponsorship</p>
-  <h2>Sponsorship available for {escape(city["name"])}</h2>
-  <p>Water cooler companies and local businesses can be listed as cooler partners. <a href="{site_href("list-your-business/", depth)}">List your business</a>.</p>
-</aside>"""
 
 
-def page_city(cfg, city, osm_feats, partner_feats) -> str:
+def page_redirect(cfg, from_slug: str, to_slug: str, to_name: str) -> str:
+    dest = cfg["siteUrl"].rstrip("/") + f"/{to_slug}/"
+    rel = site_href(f"{to_slug}/", 1)
+    brand = escape(cfg.get("brand") or "SipSpot")
+    title = f"Redirecting to {escape(to_name)} — {brand}"
+    return f"""<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title}</title>
+  <meta http-equiv="refresh" content="0; url={escape(dest)}">
+  <link rel="canonical" href="{escape(dest)}">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#1E88E5">
+  <link rel="icon" href="{site_href("favicon.ico", 1)}" type="image/x-icon">
+</head>
+<body>
+  <p>This page has moved to <a href="{rel}">free water refill points in {escape(to_name)}</a>.</p>
+</body>
+</html>
+"""
+
+
+def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
     brand = cfg["brand"]
     name = city["name"]
     title = f"Free water refill points in {name} — {brand}"
@@ -492,7 +623,11 @@ def page_city(cfg, city, osm_feats, partner_feats) -> str:
     url = cfg["siteUrl"].rstrip("/") + f"/{city['slug']}/"
     depth = 1
     faq = faq_jsonld(name, city["osm_count"])
-    extra = f'<script type="application/ld+json">{faq}</script>'
+    crumbs = breadcrumb_jsonld(cfg, city)
+    extra = (
+        f'<script type="application/ld+json">{faq}</script>\n'
+        f'  <script type="application/ld+json">{crumbs}</script>'
+    )
     city_payload = {
         "slug": city["slug"],
         "name": city["name"],
@@ -501,12 +636,22 @@ def page_city(cfg, city, osm_feats, partner_feats) -> str:
         "radius_km": city["radius_km"],
         "zoom": city.get("zoom", 12),
     }
+    if city.get("centres"):
+        city_payload["centres"] = city["centres"]
     partner_note = ""
     if city.get("partner_count"):
         n = city["partner_count"]
         partner_note = f" There {'is' if n == 1 else 'are'} also {n} cooler partner listing{'s' if n != 1 else ''} in this area, shown separately."
-        if any((p.get("properties") or {}).get("is_example") for p in partner_feats):
-            partner_note += " Some partner pins are example data only."
+    intros = city_intro_paragraphs(city, all_cities or [])
+    if intros:
+        first, *rest = intros
+        intro_html = f'<p class="lede">{escape(first)}</p>' + "".join(f"<p>{escape(p)}</p>" for p in rest)
+        if partner_note:
+            intro_html += f"<p>{escape(partner_note.strip())}</p>"
+    else:
+        intro_html = f'<p class="lede">{city["osm_count"]} OpenStreetMap point{"s" if city["osm_count"] != 1 else ""} in and around {escape(name)}.{partner_note}</p>'
+    sponsor = sponsor_slot(city, partner_feats, depth)
+    sponsor_block = f'\n    <div class="wrap city-sponsor">\n      {sponsor}\n    </div>' if sponsor else ""
     return f"""{head(cfg, title, desc, url, extra=extra, include_map=True, depth=depth)}
 <body class="city-page">
   <a class="skip-link" href="#map">Skip to map</a>
@@ -514,15 +659,12 @@ def page_city(cfg, city, osm_feats, partner_feats) -> str:
   <main class="page-body">
     <div class="wrap city-intro">
       <h1>Free water refill points in {escape(name)}</h1>
-      <p class="lede">{city['osm_count']} OpenStreetMap point{"s" if city["osm_count"] != 1 else ""} in and around {escape(name)}.{partner_note}</p>
+      {intro_html}
       <div class="hero-actions">
         <button type="button" class="btn btn-primary js-locate" id="locate-btn">Find water near me</button>
       </div>
       <p class="status" id="status" role="status"></p>
-    </div>
-    <div class="wrap city-sponsor">
-      {sponsor_slot(city, partner_feats, depth)}
-    </div>
+    </div>{sponsor_block}
     <div class="map-stage">
       <div class="wrap map-stage-inner">
         {filters()}
@@ -541,10 +683,6 @@ def page_city(cfg, city, osm_feats, partner_feats) -> str:
       </div>
     </div>
     <div class="wrap below-map">
-      <div class="slots">
-        {ad_slot(f"city-{city['slug']}-below-map", depth)}
-        {affiliate_slot()}
-      </div>
       <section class="faq">
         <h2>Frequently asked questions</h2>
         <details open>
@@ -598,7 +736,6 @@ def page_cities(cfg, cities) -> str:
 
 def page_privacy(cfg) -> str:
     brand = cfg["brand"]
-    tagline = cfg.get("tagline") or "Find it. Fill it. Go."
     desc = f"Privacy information for {brand}."
     url = cfg["siteUrl"].rstrip("/") + "/privacy/"
     email = escape(cfg.get("contactEmail") or "")
@@ -609,19 +746,50 @@ def page_privacy(cfg) -> str:
   <main class="page-body">
     <div class="wrap prose">
       <h1>Privacy</h1>
-      <p>{escape(tagline)} {escape(brand)} is a static website. You do not need an account, and we do not ask for a password.</p>
+      <p>{escape(brand)} is a free map of drinking-water and bottle-fill points in the UK. You do not need an account, and we do not ask you to sign in.</p>
+      <h2>Who runs this site</h2>
+      <p>{escape(brand)} is run by [Your name], a sole trader in the United Kingdom. If you have a question about this site or about your information, email <a href="mailto:{email}">{email}</a>.</p>
+      <h2>What we collect</h2>
+      <p>The site is a set of static files. We do not run a user database, and we have not installed any analytics.</p>
+      <p>If you use the “List your business” form, it opens your own email app with the details you typed and addresses the message to {email}. We only see that information if you send the email. Please do not include a password or payment details. We will use what you send only to follow up about a listing.</p>
+      <p>We do not set cookies. The “Still here” and “Gone” buttons on a map point store your choice in your browser’s local storage (not a cookie), so the same point does not ask again on this device. That vote is not sent to us, because no feedback server is set up yet.</p>
       <h2>Location</h2>
-      <p>If you use “Find water near me”, your browser may share your location with this page so the map can sort points by an approximate walking distance. That location is used only in your browser. It is not sent to our server (the site is static files) and it is not used to build the map data.</p>
+      <p>If you tap “Find water near me”, your browser may share your location with this page so the map can centre on you and estimate a walking distance. That location stays in your browser. It is not sent to us.</p>
+      <h2>Map tiles, directions and other services</h2>
+      <p>The map background tiles are loaded from CARTO (basemaps.cartocdn.com). CARTO sees your IP address, as any website host would.</p>
+      <p>The site also loads fonts from Google Fonts (fonts.googleapis.com and fonts.gstatic.com) and map scripts from unpkg.com and cdn.jsdelivr.net. Those providers may also see your IP address.</p>
+      <p>The Directions buttons open Google Maps or Apple Maps, which have their own privacy policies. We do not receive the route you follow.</p>
+      <h2>Hosting</h2>
+      <p>The site is hosted on GitHub Pages. The sipspot.co.uk domain is set up with Cloudflare DNS.</p>
       <h2>Map data</h2>
-      <p>Public fountain and café fill-point data comes from OpenStreetMap and is licensed under the ODbL. Partner business listings are a separate file and are not combined with OSM data. SipSpot lists only free walk-in fills: OSM points tagged fee=yes or access=customers, access=private or access=no are excluded, and partner listings must have walk_in_free=yes.</p>
-      <h2>Advertising and cookies</h2>
-      <p><strong>A cookie consent banner must be added before ads go live.</strong> The advertisement slots on this site are placeholders only. Once Google AdSense or a similar network is connected, a consent banner is required before non-essential cookies or advertising identifiers are set, in line with UK GDPR and the Privacy and Electronic Communications Regulations.</p>
-      <h2>Affiliate links</h2>
-      <p>The “Recommended reusable bottles” box is a placeholder. If affiliate links are added later, this page will say so and name the programme.</p>
-      <h2>List your business</h2>
-      <p>The business listing form sends the details you type, such as a name, email address and address, by email to {email} or to a form endpoint configured in the site settings. Do not send passwords or payment details. We will use the information only to follow up about a listing.</p>
-      <h2>Contact</h2>
-      <p><a href="mailto:{email}">{email}</a></p>
+      <p>Public fountain, tap and café fill-point data comes from OpenStreetMap and is licensed under the Open Database Licence (ODbL 1.0). © OpenStreetMap contributors — <a href="https://www.openstreetmap.org/copyright">www.openstreetmap.org/copyright</a>. Partner listings, when we add any, are a separate file and are not combined with the OpenStreetMap data.</p>
+      <h2>Your rights</h2>
+      <p>Because we are in the United Kingdom, UK GDPR applies to personal information we hold — for example an email you send us. You can ask to see that information, have it corrected or deleted, or ask us to restrict or object to how we use it. To do that, email <a href="mailto:{email}">{email}</a>.</p>
+      <p>You also have the right to complain to the Information Commissioner’s Office (ICO) at <a href="https://www.ico.org.uk">ico.org.uk</a>.</p>
+    </div>
+  </main>
+  {footer(cfg, depth)}
+  <script src="{versioned_href("js/config.js", depth)}"></script>
+</body>
+</html>"""
+
+
+def page_terms(cfg) -> str:
+    brand = cfg["brand"]
+    desc = f"Terms of use for {brand}."
+    url = cfg["siteUrl"].rstrip("/") + "/terms/"
+    email = escape(cfg.get("contactEmail") or "")
+    depth = 1
+    return f"""{head(cfg, f"Terms of use — {brand}", desc, url, depth=depth)}
+<body>
+  {header(cfg, "", depth)}
+  <main class="page-body">
+    <div class="wrap prose">
+      <h1>Terms of use</h1>
+      <p>{escape(brand)} is an information service run by [Your name], a sole trader in the United Kingdom. It helps you find drinking-water and bottle-fill points that have been mapped as free to use. If you have a question, email <a href="mailto:{email}">{email}</a>.</p>
+      <p>The map is a starting point, not a guarantee. Always check a refill point yourself before you rely on it. A tap may be out of order, closed, or no longer there.</p>
+      <p>Points come mainly from OpenStreetMap, which is updated by volunteers, and may also include cooler partners we list separately. Hours, access and water type can be wrong or out of date. We do not inspect every point, and we give no warranty that a point will be available, safe or suitable.</p>
+      <p>Public fountain, tap and café fill-point data is © OpenStreetMap contributors and licensed under the Open Database Licence (ODbL 1.0). See <a href="https://www.openstreetmap.org/copyright">openstreetmap.org/copyright</a>.</p>
     </div>
   </main>
   {footer(cfg, depth)}
@@ -690,7 +858,7 @@ def page_list_business(cfg) -> str:
         <label>Notes <span class="hint">(optional)</span>
           <textarea name="notes" placeholder="Where the cooler is, any access notes"></textarea>
         </label>
-        <p class="hint">This form does not collect a password or take payment. It opens an email to {email}, or posts to a form endpoint if one is set in config.json.</p>
+        <p class="hint">This form does not collect a password or take payment. It opens an email to {email} with the details you typed.</p>
         <button type="submit" class="btn btn-primary">Send listing request</button>
         <p class="status" id="form-status" role="status"></p>
       </form>
@@ -731,7 +899,8 @@ def write_sitemap(cfg, cities) -> None:
         (base + "/", "1.0"),
         (base + "/cities/", "0.8"),
         (base + "/list-your-business/", "0.6"),
-        (base + "/privacy/", "0.3"),
+        (base + "/privacy/", "0.5"),
+        (base + "/terms/", "0.5"),
     ]
     for c in cities:
         urls.append((f"{base}/{c['slug']}/", "0.7"))
@@ -765,21 +934,29 @@ def main() -> int:
     partners = load_json(PARTNER_PATH, {}).get("features") or []
 
     cities = choose_cities(places, osm, partners)
+    cities, redirects = apply_city_merges(cities)
     public_cities = [{k: v for k, v in c.items() if not k.startswith("_")} for c in cities]
     write(ROOT / "data" / "cities.json", json.dumps(public_cities, ensure_ascii=False, indent=2))
 
     write(ROOT / "index.html", page_index(cfg, public_cities))
     write(ROOT / "cities" / "index.html", page_cities(cfg, public_cities))
     write(ROOT / "privacy" / "index.html", page_privacy(cfg))
+    write(ROOT / "terms" / "index.html", page_terms(cfg))
     write(ROOT / "list-your-business" / "index.html", page_list_business(cfg))
 
-    # Remove stale city folders only if they look like generated pages? Safer: just write/overwrite.
+    by_slug = {c["slug"]: c for c in cities}
+    for from_slug, to_slug in redirects.items():
+        dest = by_slug[to_slug]
+        write(ROOT / from_slug / "index.html", page_redirect(cfg, from_slug, to_slug, dest["name"]))
+
     for city in cities:
-        write(ROOT / city["slug"] / "index.html", page_city(cfg, city, city["_osm"], city["_partners"]))
+        write(ROOT / city["slug"] / "index.html", page_city(cfg, city, city["_osm"], city["_partners"], cities))
 
     write_sitemap(cfg, public_cities)
     write_robots(cfg)
 
+    if redirects:
+        print("Redirects: " + ", ".join(f"{a} → {b}" for a, b in sorted(redirects.items())))
     print(f"Generated {len(cities)} city pages from {len(osm)} OSM points and {len(partners)} partner points")
     print("Top 30 by population are always included; additional places need 10+ OSM points.")
     for c in sorted(public_cities, key=lambda x: (-x["osm_count"], x["name"]))[:15]:

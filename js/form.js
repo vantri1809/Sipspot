@@ -35,7 +35,7 @@
       return;
     }
 
-    const email = cfg.contactEmail || "hello@sipspot.uk";
+    const email = cfg.contactEmail || "hello@sipspot.co.uk";
     const lines = [
       "SipSpot cooler partner listing request",
       "",

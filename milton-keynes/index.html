@@ -12,14 +12,16 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_GB">
   <meta name="theme-color" content="#1E88E5">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=b1cfcc3">
+  <link rel="stylesheet" href="../css/style.css?v=2320329">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Are these water refill points in Milton Keynes free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every point on SipSpot is free for anyone, with no purchase needed. OpenStreetMap points tagged as charging a fee, or as customers-only, private or no public access, are left off the map. Cooler partners must be marked walk-in free."}}, {"@type": "Question", "name": "Where does the Milton Keynes map data come from?", "acceptedAnswer": {"@type": "Answer", "text": "Public fountains, taps and café fill points come from OpenStreetMap and are updated from the official OSM database. Cooler partner businesses are a separate list maintained by SipSpot and are never merged with the OSM data."}}, {"@type": "Question", "name": "How often is the map updated?", "acceptedAnswer": {"@type": "Answer", "text": "OpenStreetMap points are refreshed weekly from the Overpass API. Each popup shows the date the point was last edited on OpenStreetMap. Partner listings show the date they were last verified."}}, {"@type": "Question", "name": "What if a point is wrong?", "acceptedAnswer": {"@type": "Answer", "text": "For an OpenStreetMap point, use the “Is this wrong? Fix on OpenStreetMap” link in the popup. For a cooler partner listing, use the List your business page to get in touch."}}, {"@type": "Question", "name": "When is a point open?", "acceptedAnswer": {"@type": "Answer", "text": "Opening hours are shown on every point. If hours are missing we say “Hours not listed”. The Open now filter only includes points whose hours we can parse and that are open at the moment, using your device clock."}}, {"@type": "Question", "name": "How do I add a business?", "acceptedAnswer": {"@type": "Answer", "text": "Use the List your business page. There is no account, password or payment. A short form sends your details by email or a form endpoint."}}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://sipspot.co.uk/"}, {"@type": "ListItem", "position": 2, "name": "Cities", "item": "https://sipspot.co.uk/cities/"}, {"@type": "ListItem", "position": 3, "name": "Milton Keynes", "item": "https://sipspot.co.uk/milton-keynes/"}]}</script>
 </head>
 <body class="city-page">
   <a class="skip-link" href="#map">Skip to map</a>
@@ -46,13 +48,6 @@
         <button type="button" class="btn btn-primary js-locate" id="locate-btn">Find water near me</button>
       </div>
       <p class="status" id="status" role="status"></p>
-    </div>
-    <div class="wrap city-sponsor">
-      <aside class="sponsor-slot">
-  <p class="label">Sponsorship</p>
-  <h2>Sponsorship available for Milton Keynes</h2>
-  <p>Water cooler companies and local businesses can be listed as cooler partners. <a href="../list-your-business/">List your business</a>.</p>
-</aside>
     </div>
     <div class="map-stage">
       <div class="wrap map-stage-inner">
@@ -106,22 +101,6 @@
       </div>
     </div>
     <div class="wrap below-map">
-      <div class="slots">
-        <aside class="ad-slot" data-ad-placement="city-milton-keynes-below-map" aria-label="Advertisement">
-  <p class="label">Advertisement</p>
-  <p>AdSense slot — city-milton-keynes-below-map. Not shown over the map. A cookie consent banner must be added before ads go live. See the <a href="../privacy/">privacy page</a>.</p>
-</aside>
-        <aside class="affiliate-slot" aria-label="Recommended reusable bottles">
-  <p class="label">Affiliate</p>
-  <h2>Recommended reusable bottles</h2>
-  <p>Placeholder for affiliate links to reusable bottles. Replace with your chosen programme (for example Amazon Associates) before launch. Disclose affiliate relationships on the privacy page.</p>
-  <div class="affiliate-items">
-    <div class="affiliate-item">Bottle 1 — placeholder</div>
-    <div class="affiliate-item">Bottle 2 — placeholder</div>
-    <div class="affiliate-item">Bottle 3 — placeholder</div>
-  </div>
-</aside>
-      </div>
       <section class="faq">
         <h2>Frequently asked questions</h2>
         <details open>
@@ -153,7 +132,8 @@
     <p>
       <a href="../cities/">Cities</a> ·
       <a href="../list-your-business/">List your business</a> ·
-      <a href="../privacy/">Privacy</a>
+      <a href="../privacy/">Privacy</a> ·
+      <a href="../terms/">Terms</a>
     </p>
   </div>
 </footer>
@@ -161,8 +141,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/opening_hours@3.8.0/opening_hours+deps.min.js"></script>
-  <script src="../js/config.js?v=b1cfcc3"></script>
-  <script src="../js/map-provider.js?v=b1cfcc3"></script>
-  <script src="../js/app.js?v=b1cfcc3"></script>
+  <script src="../js/config.js?v=2320329"></script>
+  <script src="../js/map-provider.js?v=2320329"></script>
+  <script src="../js/app.js?v=2320329"></script>
 </body>
 </html>

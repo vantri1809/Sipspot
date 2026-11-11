@@ -45,14 +45,26 @@
   },
   {
     "slug": "bournemouth",
-    "name": "Bournemouth",
-    "lat": 50.7192,
-    "lon": -1.8808,
+    "name": "Bournemouth and Poole",
+    "lat": 50.7171,
+    "lon": -1.9340000000000002,
     "radius_km": 9,
     "population": 196900,
     "zoom": 12,
-    "osm_count": 37,
-    "partner_count": 0
+    "osm_count": 39,
+    "partner_count": 0,
+    "centres": [
+      {
+        "lat": 50.7192,
+        "lon": -1.8808,
+        "radius_km": 9
+      },
+      {
+        "lat": 50.715,
+        "lon": -1.9872,
+        "radius_km": 7
+      }
+    ]
   },
   {
     "slug": "bradford",
@@ -254,14 +266,26 @@
   },
   {
     "slug": "manchester",
-    "name": "Manchester",
-    "lat": 53.4808,
-    "lon": -2.2426,
+    "name": "Manchester and Salford",
+    "lat": 53.48415,
+    "lon": -2.26635,
     "radius_km": 14,
     "population": 552000,
     "zoom": 12,
     "osm_count": 26,
-    "partner_count": 0
+    "partner_count": 0,
+    "centres": [
+      {
+        "lat": 53.4808,
+        "lon": -2.2426,
+        "radius_km": 14
+      },
+      {
+        "lat": 53.4875,
+        "lon": -2.2901,
+        "radius_km": 7
+      }
+    ]
   },
   {
     "slug": "milton-keynes",
@@ -363,17 +387,6 @@
     "partner_count": 0
   },
   {
-    "slug": "poole",
-    "name": "Poole",
-    "lat": 50.715,
-    "lon": -1.9872,
-    "radius_km": 7,
-    "population": 151500,
-    "zoom": 12,
-    "osm_count": 15,
-    "partner_count": 0
-  },
-  {
     "slug": "portsmouth",
     "name": "Portsmouth",
     "lat": 50.8198,
@@ -382,17 +395,6 @@
     "population": 208100,
     "zoom": 12,
     "osm_count": 14,
-    "partner_count": 0
-  },
-  {
-    "slug": "salford",
-    "name": "Salford",
-    "lat": 53.4875,
-    "lon": -2.2901,
-    "radius_km": 7,
-    "population": 129794,
-    "zoom": 12,
-    "osm_count": 11,
     "partner_count": 0
   },
   {

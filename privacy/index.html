@@ -12,10 +12,11 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_GB">
   <meta name="theme-color" content="#1E88E5">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=b1cfcc3">
+  <link rel="stylesheet" href="../css/style.css?v=2320329">
   
 </head>
 <body>
@@ -37,19 +38,26 @@
   <main class="page-body">
     <div class="wrap prose">
       <h1>Privacy</h1>
-      <p>Find it. Fill it. Go. SipSpot is a static website. You do not need an account, and we do not ask for a password.</p>
+      <p>SipSpot is a free map of drinking-water and bottle-fill points in the UK. You do not need an account, and we do not ask you to sign in.</p>
+      <h2>Who runs this site</h2>
+      <p>SipSpot is run by [Your name], a sole trader in the United Kingdom. If you have a question about this site or about your information, email <a href="mailto:hello@sipspot.co.uk">hello@sipspot.co.uk</a>.</p>
+      <h2>What we collect</h2>
+      <p>The site is a set of static files. We do not run a user database, and we have not installed any analytics.</p>
+      <p>If you use the “List your business” form, it opens your own email app with the details you typed and addresses the message to hello@sipspot.co.uk. We only see that information if you send the email. Please do not include a password or payment details. We will use what you send only to follow up about a listing.</p>
+      <p>We do not set cookies. The “Still here” and “Gone” buttons on a map point store your choice in your browser’s local storage (not a cookie), so the same point does not ask again on this device. That vote is not sent to us, because no feedback server is set up yet.</p>
       <h2>Location</h2>
-      <p>If you use “Find water near me”, your browser may share your location with this page so the map can sort points by an approximate walking distance. That location is used only in your browser. It is not sent to our server (the site is static files) and it is not used to build the map data.</p>
+      <p>If you tap “Find water near me”, your browser may share your location with this page so the map can centre on you and estimate a walking distance. That location stays in your browser. It is not sent to us.</p>
+      <h2>Map tiles, directions and other services</h2>
+      <p>The map background tiles are loaded from CARTO (basemaps.cartocdn.com). CARTO sees your IP address, as any website host would.</p>
+      <p>The site also loads fonts from Google Fonts (fonts.googleapis.com and fonts.gstatic.com) and map scripts from unpkg.com and cdn.jsdelivr.net. Those providers may also see your IP address.</p>
+      <p>The Directions buttons open Google Maps or Apple Maps, which have their own privacy policies. We do not receive the route you follow.</p>
+      <h2>Hosting</h2>
+      <p>The site is hosted on GitHub Pages. The sipspot.co.uk domain is set up with Cloudflare DNS.</p>
       <h2>Map data</h2>
-      <p>Public fountain and café fill-point data comes from OpenStreetMap and is licensed under the ODbL. Partner business listings are a separate file and are not combined with OSM data. SipSpot lists only free walk-in fills: OSM points tagged fee=yes or access=customers, access=private or access=no are excluded, and partner listings must have walk_in_free=yes.</p>
-      <h2>Advertising and cookies</h2>
-      <p><strong>A cookie consent banner must be added before ads go live.</strong> The advertisement slots on this site are placeholders only. Once Google AdSense or a similar network is connected, a consent banner is required before non-essential cookies or advertising identifiers are set, in line with UK GDPR and the Privacy and Electronic Communications Regulations.</p>
-      <h2>Affiliate links</h2>
-      <p>The “Recommended reusable bottles” box is a placeholder. If affiliate links are added later, this page will say so and name the programme.</p>
-      <h2>List your business</h2>
-      <p>The business listing form sends the details you type, such as a name, email address and address, by email to hello@sipspot.uk or to a form endpoint configured in the site settings. Do not send passwords or payment details. We will use the information only to follow up about a listing.</p>
-      <h2>Contact</h2>
-      <p><a href="mailto:hello@sipspot.uk">hello@sipspot.uk</a></p>
+      <p>Public fountain, tap and café fill-point data comes from OpenStreetMap and is licensed under the Open Database Licence (ODbL 1.0). © OpenStreetMap contributors — <a href="https://www.openstreetmap.org/copyright">www.openstreetmap.org/copyright</a>. Partner listings, when we add any, are a separate file and are not combined with the OpenStreetMap data.</p>
+      <h2>Your rights</h2>
+      <p>Because we are in the United Kingdom, UK GDPR applies to personal information we hold — for example an email you send us. You can ask to see that information, have it corrected or deleted, or ask us to restrict or object to how we use it. To do that, email <a href="mailto:hello@sipspot.co.uk">hello@sipspot.co.uk</a>.</p>
+      <p>You also have the right to complain to the Information Commissioner’s Office (ICO) at <a href="https://www.ico.org.uk">ico.org.uk</a>.</p>
     </div>
   </main>
   <footer class="site-footer">
@@ -60,10 +68,11 @@
     <p>
       <a href="../cities/">Cities</a> ·
       <a href="../list-your-business/">List your business</a> ·
-      <a href="../privacy/">Privacy</a>
+      <a href="../privacy/">Privacy</a> ·
+      <a href="../terms/">Terms</a>
     </p>
   </div>
 </footer>
-  <script src="../js/config.js?v=b1cfcc3"></script>
+  <script src="../js/config.js?v=2320329"></script>
 </body>
 </html>

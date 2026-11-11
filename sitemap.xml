@@ -18,7 +18,12 @@
   <url>
     <loc>https://sipspot.co.uk/privacy/</loc>
     <lastmod>2026-11-11</lastmod>
-    <priority>0.3</priority>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://sipspot.co.uk/terms/</loc>
+    <lastmod>2026-11-11</lastmod>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://sipspot.co.uk/aberdeen/</loc>
@@ -186,17 +191,7 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://sipspot.co.uk/poole/</loc>
-    <lastmod>2026-11-11</lastmod>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://sipspot.co.uk/portsmouth/</loc>
-    <lastmod>2026-11-11</lastmod>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://sipspot.co.uk/salford/</loc>
     <lastmod>2026-11-11</lastmod>
     <priority>0.7</priority>
   </url>

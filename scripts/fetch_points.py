@@ -40,7 +40,7 @@ NORTH_WEST_PBF = [
 
 USER_AGENT = (
     "SipSpot/1.0 (static UK drinking-water map; OSM Overpass extract; "
-    "https://sipspot.uk)"
+    "https://sipspot.co.uk)"
 )
 
 ENDPOINTS = [

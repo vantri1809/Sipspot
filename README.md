@@ -230,7 +230,7 @@ Change `feedback.dataUrl` if you host the overlay at a different path.
 
 ## Ads and affiliates
 
-Advertisement slots are marked “Advertisement” and sit below the map, never on top of it. The reusable-bottle box is an affiliate placeholder. **Add a cookie consent banner before AdSense or similar ads go live** — this is also stated on the privacy page.
+There are no advertisement or affiliate placeholders on the site. A per-city sponsor strip is only rendered when a real cooler-partner sponsor is present in the partner data.
 
 ## Licence
 

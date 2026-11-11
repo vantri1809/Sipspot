@@ -409,50 +409,23 @@ a.direct-choice {
   outline-offset: 2px;
 }
 
-.slots { display: grid; gap: 1rem; margin: 0 0 2rem; }
-@media (min-width: 800px) {
-  .slots { grid-template-columns: 1fr 1fr; }
-}
-.ad-slot, .affiliate-slot, .sponsor-slot {
-  border: 2px dashed #c9c2b4;
-  background: var(--ad-bg);
+.sponsor-slot {
+  background: var(--paper-2);
+  border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 1rem;
-  color: var(--muted);
+  padding: 0.9rem 1rem;
+  color: var(--ink);
 }
-.ad-slot .label, .affiliate-slot .label, .sponsor-slot .label {
+.sponsor-slot .label {
   font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin: 0 0 0.4rem;
+  color: var(--muted);
 }
-.ad-slot { min-height: 110px; text-align: center; }
-.affiliate-slot h2, .sponsor-slot h2 { margin: 0 0 0.35rem; font-size: 1.05rem; color: var(--ink); }
-.affiliate-slot p, .sponsor-slot p { margin: 0; font-size: 0.95rem; }
-.affiliate-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.7rem;
-}
-.affiliate-item {
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 0.6rem 0.7rem;
-  flex: 1 1 140px;
-  font-size: 0.9rem;
-  color: var(--ink-soft);
-}
-.example-note {
-  font-size: 0.85rem;
-  color: #78450f;
-  background: #fff6d6;
-  border-radius: 8px;
-  padding: 0.5rem 0.7rem;
-  margin: 0 0 1rem;
-}
+.sponsor-slot h2 { margin: 0 0 0.35rem; font-size: 1.05rem; color: var(--ink); }
+.sponsor-slot p { margin: 0; font-size: 0.95rem; }
 
 .cities-preview {
   padding: 0 0 2.5rem;
