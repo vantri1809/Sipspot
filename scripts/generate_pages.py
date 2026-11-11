@@ -649,7 +649,7 @@ def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
         if partner_note:
             intro_html += f"<p>{escape(partner_note.strip())}</p>"
     else:
-        intro_html = f'<p class="lede">{city["osm_count"]} OpenStreetMap point{"s" if city["osm_count"] != 1 else ""} in and around {escape(name)}.{partner_note}</p>'
+        intro_html = f'<p class="lede">{city["osm_count"]} drinking point{"s" if city["osm_count"] != 1 else ""} in and around {escape(name)}.{partner_note}</p>'
     sponsor = sponsor_slot(city, partner_feats, depth)
     sponsor_block = f'\n    <div class="wrap city-sponsor">\n      {sponsor}\n    </div>' if sponsor else ""
     return f"""{head(cfg, title, desc, url, extra=extra, include_map=True, depth=depth)}
@@ -724,7 +724,7 @@ def page_cities(cfg, cities) -> str:
   <main class="page-body">
     <div class="wrap">
       <h1>Cities</h1>
-      <p class="lede">Static pages for major UK cities and any place in our gazetteer with 10 or more OpenStreetMap points.</p>
+      <p class="lede">Static pages for major UK cities and any place in our gazetteer with 10 or more drinking points.</p>
       {city_grid(cities, "All city pages", depth=depth)}
     </div>
   </main>
