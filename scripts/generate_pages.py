@@ -748,7 +748,7 @@ def page_privacy(cfg) -> str:
       <h1>Privacy</h1>
       <p>{escape(brand)} is a free map of drinking-water and bottle-fill points in the UK. You do not need an account, and we do not ask you to sign in.</p>
       <h2>Who runs this site</h2>
-      <p>{escape(brand)} is run by [Your name], a sole trader in the United Kingdom. If you have a question about this site or about your information, email <a href="mailto:{email}">{email}</a>.</p>
+      <p>{escape(brand)} is run by J Skelton, a sole trader in the United Kingdom. If you have a question about this site or about your information, email <a href="mailto:{email}">{email}</a>.</p>
       <h2>What we collect</h2>
       <p>The site is a set of static files. We do not run a user database, and we have not installed any analytics.</p>
       <p>If you use the “List your business” form, it opens your own email app with the details you typed and addresses the message to {email}. We only see that information if you send the email. Please do not include a password or payment details. We will use what you send only to follow up about a listing.</p>
@@ -786,7 +786,7 @@ def page_terms(cfg) -> str:
   <main class="page-body">
     <div class="wrap prose">
       <h1>Terms of use</h1>
-      <p>{escape(brand)} is an information service run by [Your name], a sole trader in the United Kingdom. It helps you find drinking-water and bottle-fill points that have been mapped as free to use. If you have a question, email <a href="mailto:{email}">{email}</a>.</p>
+      <p>{escape(brand)} is an information service run by J Skelton, a sole trader in the United Kingdom. It helps you find drinking-water and bottle-fill points that have been mapped as free to use. If you have a question, email <a href="mailto:{email}">{email}</a>.</p>
       <p>The map is a starting point, not a guarantee. Always check a refill point yourself before you rely on it. A tap may be out of order, closed, or no longer there.</p>
       <p>Points come mainly from OpenStreetMap, which is updated by volunteers, and may also include cooler partners we list separately. Hours, access and water type can be wrong or out of date. We do not inspect every point, and we give no warranty that a point will be available, safe or suitable.</p>
       <p>Public fountain, tap and café fill-point data is © OpenStreetMap contributors and licensed under the Open Database Licence (ODbL 1.0). See <a href="https://www.openstreetmap.org/copyright">openstreetmap.org/copyright</a>.</p>
