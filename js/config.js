@@ -5,8 +5,8 @@
 window.SIPSPOT_CONFIG = {
   brand: "SipSpot",
   shortBrand: "SipSpot",
-  domain: "sipspot.uk",
-  siteUrl: "https://sipspot.uk",
+  domain: "sipspot.co.uk",
+  siteUrl: "https://sipspot.co.uk",
   locale: "en-GB",
   tagline: "Find it. Fill it. Go.",
   contactEmail: "hello@sipspot.uk",
@@ -54,7 +54,7 @@ window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
     var base = cfg.basePath || '/';
     return base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
   }
-  var assetVersion = "5d4207c";
+  var assetVersion = "979d968";
   function withVersion(url) {
     if (!url) return url;
     if (/^(https?:)?\/\//i.test(url) && url.indexOf(location.origin) !== 0) return url;
