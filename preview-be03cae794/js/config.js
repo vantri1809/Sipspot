@@ -32,7 +32,8 @@ window.SIPSPOT_CONFIG = {
   posterLine: "Skip the plastic. Find a tap.",
   metaDescription: "Find it. Fill it. Go. Free drinking water and bottle-fill points across the UK. No app, no account.",
   staleAfterMonths: 36,
-  feedback: {"enabled": true, "endpoint": null, "dataUrl": "/data/feedback.json"}
+  feedback: {"enabled": true, "endpoint": null, "dataUrl": "/data/feedback.json"},
+  apiBase: ""
 };
 window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
 
@@ -54,7 +55,7 @@ window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
     var base = cfg.basePath || '/';
     return base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
   }
-  var assetVersion = "0513226";
+  var assetVersion = "26f2613";
   function withVersion(url) {
     if (!url) return url;
     if (/^(https?:)?\/\//i.test(url) && url.indexOf(location.origin) !== 0) return url;

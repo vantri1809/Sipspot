@@ -40,5 +40,6 @@
     "enabled": true,
     "endpoint": null,
     "dataUrl": "/data/feedback.json"
-  }
+  },
+  "apiBase": ""
 }

@@ -1,6 +1,6 @@
 /* SipSpot service worker. CACHE_VERSION is kept in sync with the
  * site's ?v= stamp by scripts/generate_pages.py. */
-const CACHE_VERSION = "0513226";
+const CACHE_VERSION = "26f2613";
 const SHELL_CACHE = "sipspot-shell-" + CACHE_VERSION;
 const DATA_CACHE = "sipspot-data-" + CACHE_VERSION;
 const CDN_CACHE = "sipspot-cdn-" + CACHE_VERSION;
@@ -50,6 +50,11 @@ function isMapLibrary(url) {
     /unpkg\.com\/(leaflet|leaflet\.markercluster|maplibre-gl|@maplibre)\b/.test(href) ||
     /cdn\.jsdelivr\.net\/npm\/opening_hours/.test(href)
   );
+}
+
+/* Live counters must never be cached: skip the API host and any /api/ path. */
+function isApiRequest(url) {
+  return /^api\./.test(url.hostname) || /^\/api(?:\/|$)/.test(url.pathname);
 }
 
 function isHtmlRequest(request, url) {
@@ -146,6 +151,8 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
+
+  if (isApiRequest(url)) return;
 
   // Do not cache map tiles (licence and volume). Let the browser handle them.
   if (isMapTile(url)) return;
