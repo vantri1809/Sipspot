@@ -618,7 +618,7 @@ def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
     title = f"Free water refill points in {name} — {brand}"
     desc = (
         f"{cfg.get('tagline') or 'Find it. Fill it. Go.'} "
-        f"{city['osm_count']} OpenStreetMap drinking-water points in {name}."
+        f"{city['osm_count']} drinking points in {name}."
     )
     url = cfg["siteUrl"].rstrip("/") + f"/{city['slug']}/"
     depth = 1
