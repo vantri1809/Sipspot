@@ -1134,6 +1134,11 @@ a.feedback-osm-link:focus-visible {
   outline-offset: 2px;
 }
 
+.partner-note {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
 /* "I filled up here" refill counter */
 .refill-box {
   margin: 0.55rem 0 0.35rem;

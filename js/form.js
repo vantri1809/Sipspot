@@ -1,4 +1,4 @@
-/* List-your-business form: mailto by default, or POST to a configured endpoint. */
+/* List-your-venue form: mailto by default, or POST to a configured endpoint. */
 (function () {
   const form = document.getElementById("partner-form");
   if (!form) return;
@@ -37,9 +37,11 @@
 
     const email = cfg.contactEmail || "hello@sipspot.co.uk";
     const lines = [
-      "SipSpot cooler partner listing request",
+      "SipSpot partner refill point listing request",
       "",
-      "Business name: " + (data.business || ""),
+      "Venue or organisation: " + (data.business || ""),
+      "Type of venue: " + (data.venue_type || ""),
+      "What we offer: " + (data.refill_type || ""),
       "Contact name: " + (data.contact_name || ""),
       "Email: " + (data.email || ""),
       "Address: " + (data.address || ""),
@@ -50,7 +52,7 @@
       "Walk-in free (no purchase needed): " + (data.walk_in_free || "no"),
       "Notes: " + (data.notes || "")
     ];
-    const subject = "SipSpot partner listing: " + (data.business || "new business");
+    const subject = "SipSpot refill point listing: " + (data.business || "new venue");
     const href =
       "mailto:" + encodeURIComponent(email) +
       "?subject=" + encodeURIComponent(subject) +

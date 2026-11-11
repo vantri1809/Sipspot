@@ -2,6 +2,8 @@
  * as two separate collections and are never merged into one dataset.
  * Map rendering goes through js/map-provider.js so the basemap can be
  * swapped without changing pins, filters, or the partner layer.
+ * Partner points never show a supplier or cooler company name (p.partner is
+ * internal only).
  * SipSpot lists only free fills. Points tagged fee=yes are excluded.
  */
 (function () {
@@ -311,7 +313,8 @@
     const p = (feature && feature.properties) || {};
     let id = null;
     if (source === "partner") {
-      if (p.id != null && p.id !== "") id = "partner:" + String(p.id);
+      const pid = feature.id != null && feature.id !== "" ? feature.id : p.id;
+      if (pid != null && pid !== "") id = "partner:" + String(pid);
     } else if (p.osm_type && p.osm_id != null) {
       id = "osm:" + String(p.osm_type) + ":" + String(p.osm_id);
     }
@@ -1042,7 +1045,6 @@
     const example = p.is_example
       ? '<div class="example-banner">Example listing — not a real refill point</div>'
       : "";
-    const sponsor = p.partner ? "<p>Sponsored by " + escapeHtml(p.partner) + "</p>" : "";
     const verified = p.verified_date ? "Verified: " + formatDate(p.verified_date) : "Not yet verified";
     const logo = p.logo_url
       ? '<p><img src="' + escapeHtml(p.logo_url) + '" alt="" style="max-height:36px"></p>'
@@ -1050,11 +1052,12 @@
     return (
       '<div class="popup">' +
         example +
-        "<h3>" + escapeHtml(p.name || "Cooler partner") + "</h3>" +
-        '<p><span class="badge partner">Cooler partner</span> ' + waterBadges(p).join(" ") + "</p>" +
+        "<h3>" + escapeHtml(p.name || "Refill point") + "</h3>" +
+        '<p><span class="badge partner">Partner refill point</span> ' + waterBadges(p).join(" ") + "</p>" +
         hoursBlock(p) +
         (p.address ? "<p>" + escapeHtml(p.address) + "</p>" : "") +
-        sponsor + logo +
+        logo +
+        '<p class="partner-note">Listed by the venue</p>' +
         "<p>" + escapeHtml(verified) + "</p>" +
         directionsBlock(lat, lon) +
         (p.is_example ? "" : refillBlock(feature, "partner")) +
@@ -1138,7 +1141,7 @@
         lat: ll.lat,
         lon: ll.lon,
         kind: "partner",
-        title: p.name || "Cooler partner",
+        title: p.name || "Refill point",
         popupHtml: partnerPopup(f),
         water_type: p.water_type,
         chilled: p.chilled
@@ -1170,7 +1173,7 @@
     const partnerCount = partnerItems.length;
     let summary = osmCount + " drinking point" + (osmCount === 1 ? "" : "s");
     if (partnerCount) {
-      summary += " and " + partnerCount + " cooler partner" + (partnerCount === 1 ? "" : "s");
+      summary += " and " + partnerCount + " partner refill point" + (partnerCount === 1 ? "" : "s");
     }
     if (state.userLat != null) summary += ", nearest first";
     if (meta) meta.textContent = summary;
@@ -1188,9 +1191,9 @@
       btn.type = "button";
       btn.className = "result-card " + (item.source === "partner" ? "is-partner" : "is-osm");
       const p = item.feature.properties;
-      const title = item.source === "partner" ? (p.name || "Cooler partner") : displayName(p, p.kind);
+      const title = item.source === "partner" ? (p.name || "Refill point") : displayName(p, p.kind);
       const badges = [];
-      if (item.source === "partner") badges.push('<span class="badge partner">Cooler partner</span>');
+      if (item.source === "partner") badges.push('<span class="badge partner">Partner refill point</span>');
       if (p.is_example) badges.push('<span class="badge example">Example data</span>');
       if (p.kind && item.source === "osm") badges.push('<span class="badge">' + escapeHtml(p.kind) + "</span>");
       badges.push.apply(badges, waterBadges(p));
@@ -1207,7 +1210,6 @@
       if (item.metres != null) bits.push(walkingLabel(item.metres));
       if (item.source === "osm") bits.push("Last updated: " + formatMonthYear(p.timestamp));
       if (item.source === "partner" && p.address) bits.push(p.address);
-      if (item.source === "partner" && p.partner) bits.push("Sponsored by " + p.partner);
       btn.innerHTML =
         "<h3>" + escapeHtml(title) + "</h3>" +
         '<p class="hours-prominent"><strong>Hours:</strong> ' + escapeHtml(hours.text) + "</p>" +

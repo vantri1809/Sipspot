@@ -7,6 +7,8 @@ the postcodes.io API (ONS-derived), not with OSM.
 
 Expected columns (header row):
   name, address, postcode, lat, lon, partner, hours, verified_date
+The partner (supplier / sponsor) column is accepted but never written to the
+public GeoJSON: listings show the venue only, never a supplier or cooler company.
 Optional columns:
   logo_url, refill_offered, id, is_example, water_type, chilled, walk_in_free
 walk_in_free must be yes — SipSpot only lists free walk-in fills.
@@ -211,7 +213,6 @@ def main() -> int:
             "name": name,
             "address": row.get("address") or None,
             "postcode": row.get("postcode") or None,
-            "partner": row.get("partner") or None,
             "hours": row.get("hours") or None,
             "refill_offered": "free",
             "verified_date": row.get("verified_date") or None,

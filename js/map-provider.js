@@ -403,7 +403,7 @@
         if (kind === "partner") {
           return L.divIcon({
             className: "",
-            html: '<div class="rm-marker partner" role="img" aria-label="Cooler partner"><span>P</span>' + deco + "</div>",
+            html: '<div class="rm-marker partner" role="img" aria-label="Partner refill point"><span>P</span>' + deco + "</div>",
             iconSize: [28, 28],
             iconAnchor: [14, 14],
             popupAnchor: [0, -14]

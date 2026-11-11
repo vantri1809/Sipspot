@@ -2,7 +2,7 @@
 
 Find it. Fill it. Go.
 
-A static, mobile-first map of free drinking water and bottle-fill points in the UK. Free for anyone, no purchase needed. Public fountains, taps and café fill points come from OpenStreetMap. Businesses that offer a fill at a water cooler are a **separate partner layer**. There is no login and no app.
+A static, mobile-first map of free drinking water and bottle-fill points in the UK. Free for anyone, no purchase needed. Public fountains, taps and café fill points come from OpenStreetMap. Venues that list their own free tap or water cooler (shops, cafés, offices, councils, shopping centres, stations, chains) are a **separate partner layer**, shown with a generic “Partner refill point” label. A supplier or cooler company is never named on the site. There is no login and no app.
 
 The placeholder domain is **sipspot.uk**. Change it in one file: `config.json`.
 
@@ -105,7 +105,7 @@ Licence of this file: [ODbL 1.0](https://opendatacommons.org/licenses/odbl/), ©
 
 ### Partner points (`data/partners.geojson`) — keep this separate
 
-Cooler partner businesses (for example venues with a water cooler) live in a **second file**. The site loads the two files independently, draws them as two layers, and never writes a joined dataset. That is deliberate: mixing OSM data with another database and publishing the result can trigger ODbL share-alike on the other source.
+Partner refill points (venues listing their own tap or water cooler) live in a **second file**. The import never publishes a supplier or sponsor name. The site loads the two files independently, draws them as two layers, and never writes a joined dataset. That is deliberate: mixing OSM data with another database and publishing the result can trigger ODbL share-alike on the other source.
 
 `data/partners.geojson` ships as an empty FeatureCollection. Import a real list when you have one:
 
@@ -160,7 +160,7 @@ Palette name: Fresh.
 
 - Primary water blue `#1E88E5` — public fountain pins
 - Leaf green `#43A047` — café or shop pins
-- Partner purple `#8E24AA` — cooler partner pins
+- Partner purple `#8E24AA` — partner refill point pins
 - Light aqua background `#E3F2FD`
 
 ## Walk-in free policy
@@ -230,7 +230,7 @@ Change `feedback.dataUrl` if you host the overlay at a different path.
 
 ## Ads and affiliates
 
-There are no advertisement or affiliate placeholders on the site. A per-city sponsor strip is only rendered when a real cooler-partner sponsor is present in the partner data.
+There are no advertisement or affiliate placeholders on the site. There is no sponsor strip, and partner listings never name a supplier or cooler company.
 
 ## Licence
 

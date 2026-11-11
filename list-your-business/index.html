@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>List your business — SipSpot</title>
-  <meta name="description" content="List your business as a SipSpot cooler partner. Skip the plastic. Find a tap.">
+  <title>List your venue — SipSpot</title>
+  <meta name="description" content="List your venue’s free tap or water cooler on SipSpot. Free for anyone, no purchase needed. Skip the plastic. Find a tap.">
   <link rel="canonical" href="https://sipspot.co.uk/list-your-business/">
-  <meta property="og:title" content="List your business — SipSpot">
-  <meta property="og:description" content="List your business as a SipSpot cooler partner. Skip the plastic. Find a tap.">
+  <meta property="og:title" content="List your venue — SipSpot">
+  <meta property="og:description" content="List your venue’s free tap or water cooler on SipSpot. Free for anyone, no purchase needed. Skip the plastic. Find a tap.">
   <meta property="og:url" content="https://sipspot.co.uk/list-your-business/">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_GB">
@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=585ca07">
+  <link rel="stylesheet" href="../css/style.css?v=26f2613">
   
 </head>
 <body>
@@ -38,21 +38,42 @@
     <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
       <span class="nav-toggle-icon" aria-hidden="true"></span>
     </button>
-    <nav class="nav" id="site-nav" aria-label="Site"><a href="../">Map</a><a href="../cities/">Cities</a><a href="../list-your-business/" aria-current="page">List your business</a><a href="../privacy/">Privacy</a></nav>
+    <nav class="nav" id="site-nav" aria-label="Site"><a href="../">Map</a><a href="../cities/">Cities</a><a href="../list-your-business/" aria-current="page">List your venue</a><a href="../privacy/">Privacy</a></nav>
   </div>
 </header>
   <main class="page-body">
     <div class="wrap">
-      <h1>List your business</h1>
-      <p class="lede">Offer a free walk-in bottle fill — free for anyone, no purchase needed — and appear on SipSpot as a cooler partner. There is no account, no password and no payment at this stage. Find it. Fill it. Go.</p>
+      <h1>List your venue</h1>
+      <p class="lede">Have a tap or water cooler where anyone can fill a bottle for free, with no purchase needed? List it yourself and it will appear on SipSpot as a partner refill point. There is no account, no password and no payment at this stage. Find it. Fill it. Go.</p>
+      <p>Shops, cafés, offices, councils, shopping centres, stations and chains are all welcome. Your listing shows your venue’s name, address, hours and water type under a simple “Partner refill point” label. We never show the name of the company that supplies or services your tap or cooler.</p>
+      <p>Looking after lots of sites, for example as a council, water company, shopping centre or station landlord, or a chain? Email <a href="mailto:hello@sipspot.co.uk">hello@sipspot.co.uk</a> and we can add your locations together.</p>
       <div class="poster-card" aria-label="Partner poster wording">
         <p class="poster-brand">SipSpot</p>
         <p class="poster-line">Skip the plastic. Find a tap.</p>
-        <p class="poster-caption">Suggested line for partner posters and window stickers.</p>
+        <p class="poster-caption">Suggested line for posters and window stickers at your refill point.</p>
       </div>
       <form class="form" id="partner-form" novalidate>
-        <label>Business name
+        <label>Venue or organisation name
           <input type="text" name="business" required autocomplete="organization">
+        </label>
+        <label>Type of venue
+          <select name="venue_type">
+            <option value="shop">Shop</option>
+            <option value="cafe">Café, pub or restaurant</option>
+            <option value="office">Office or workplace</option>
+            <option value="council">Council or public building</option>
+            <option value="shopping centre">Shopping centre</option>
+            <option value="station">Station or transport hub</option>
+            <option value="chain">Chain with several sites</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>What you offer
+          <select name="refill_type">
+            <option value="tap">Tap</option>
+            <option value="water cooler">Water cooler</option>
+            <option value="bottle-fill station">Bottle-fill station</option>
+          </select>
         </label>
         <label>Your name
           <input type="text" name="contact_name" required autocomplete="name">
@@ -88,7 +109,7 @@
           Free for anyone, no purchase needed (required)
         </label>
         <label>Notes <span class="hint">(optional)</span>
-          <textarea name="notes" placeholder="Where the cooler is, any access notes"></textarea>
+          <textarea name="notes" placeholder="Where the tap or cooler is, any access notes"></textarea>
         </label>
         <p class="hint">This form does not collect a password or take payment. It opens an email to hello@sipspot.co.uk with the details you typed.</p>
         <button type="submit" class="btn btn-primary">Send listing request</button>
@@ -103,14 +124,14 @@
     <p>For partner posters and window stickers: “Skip the plastic. Find a tap.”</p>
     <p>
       <a href="../cities/">Cities</a> ·
-      <a href="../list-your-business/">List your business</a> ·
+      <a href="../list-your-business/">List your venue</a> ·
       <a href="../privacy/">Privacy</a> ·
       <a href="../terms/">Terms</a>
     </p>
   </div>
 </footer>
-  <script src="../js/config.js?v=585ca07"></script>
-  <script src="../js/form.js?v=585ca07"></script>
-  <script src="../js/pwa.js?v=585ca07"></script>
+  <script src="../js/config.js?v=26f2613"></script>
+  <script src="../js/form.js?v=26f2613"></script>
+  <script src="../js/pwa.js?v=26f2613"></script>
 </body>
 </html>

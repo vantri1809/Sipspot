@@ -22,11 +22,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css?v=585ca07">
+  <link rel="stylesheet" href="../css/style.css?v=26f2613">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Are these water refill points in Coventry free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every point on SipSpot is free for anyone, with no purchase needed. OpenStreetMap points tagged as charging a fee, or as customers-only, private or no public access, are left off the map. Cooler partners must be marked walk-in free."}}, {"@type": "Question", "name": "Where does the Coventry map data come from?", "acceptedAnswer": {"@type": "Answer", "text": "Public fountains, taps and café fill points come from OpenStreetMap and are updated from the official OSM database. Cooler partner businesses are a separate list maintained by SipSpot and are never merged with the OSM data."}}, {"@type": "Question", "name": "How often is the map updated?", "acceptedAnswer": {"@type": "Answer", "text": "OpenStreetMap points are refreshed weekly from the Overpass API. Each popup shows the date the point was last edited on OpenStreetMap. Partner listings show the date they were last verified."}}, {"@type": "Question", "name": "What if a point is wrong?", "acceptedAnswer": {"@type": "Answer", "text": "For an OpenStreetMap point, use the “Is this wrong? Fix on OpenStreetMap” link in the popup. For a cooler partner listing, use the List your business page to get in touch."}}, {"@type": "Question", "name": "When is a point open?", "acceptedAnswer": {"@type": "Answer", "text": "Opening hours are shown on every point. If hours are missing we say “Hours not listed”. The Open now filter only includes points whose hours we can parse and that are open at the moment, using your device clock."}}, {"@type": "Question", "name": "How do I add a business?", "acceptedAnswer": {"@type": "Answer", "text": "Use the List your business page. There is no account, password or payment. A short form sends your details by email or a form endpoint."}}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Are these water refill points in Coventry free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Every point on SipSpot is free for anyone, with no purchase needed. OpenStreetMap points tagged as charging a fee, or as customers-only, private or no public access, are left off the map. Partner refill points, listed by the venue itself, must be free to walk in and use."}}, {"@type": "Question", "name": "Where does the Coventry map data come from?", "acceptedAnswer": {"@type": "Answer", "text": "Public fountains, taps and café fill points come from OpenStreetMap and are updated from the official OSM database. Partner refill points are taps and water coolers that venues list themselves. They are kept as a separate list and are never merged with the OSM data."}}, {"@type": "Question", "name": "How often is the map updated?", "acceptedAnswer": {"@type": "Answer", "text": "OpenStreetMap points are refreshed weekly from the Overpass API. Each popup shows the date the point was last edited on OpenStreetMap. Partner listings show the date they were last verified."}}, {"@type": "Question", "name": "What if a point is wrong?", "acceptedAnswer": {"@type": "Answer", "text": "For an OpenStreetMap point, use the “Is this wrong? Fix on OpenStreetMap” link in the popup. For a partner refill point, use the List your venue page to get in touch."}}, {"@type": "Question", "name": "When is a point open?", "acceptedAnswer": {"@type": "Answer", "text": "Opening hours are shown on every point. If hours are missing we say “Hours not listed”. The Open now filter only includes points whose hours we can parse and that are open at the moment, using your device clock."}}, {"@type": "Question", "name": "How do I add my venue?", "acceptedAnswer": {"@type": "Answer", "text": "Use the List your venue page. Shops, cafés, offices, councils, shopping centres, stations and chains can list their own free tap or water cooler. There is no account, password or payment. A short form sends your details by email or a form endpoint."}}]}</script>
   <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://sipspot.co.uk/"}, {"@type": "ListItem", "position": 2, "name": "Cities", "item": "https://sipspot.co.uk/cities/"}, {"@type": "ListItem", "position": 3, "name": "Coventry", "item": "https://sipspot.co.uk/coventry/"}]}</script>
 </head>
 <body class="city-page">
@@ -43,7 +43,7 @@
     <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
       <span class="nav-toggle-icon" aria-hidden="true"></span>
     </button>
-    <nav class="nav" id="site-nav" aria-label="Site"><a href="../">Map</a><a href="../cities/" aria-current="page">Cities</a><a href="../list-your-business/">List your business</a><a href="../privacy/">Privacy</a></nav>
+    <nav class="nav" id="site-nav" aria-label="Site"><a href="../">Map</a><a href="../cities/" aria-current="page">Cities</a><a href="../list-your-business/">List your venue</a><a href="../privacy/">Privacy</a></nav>
   </div>
 </header>
   <main class="page-body">
@@ -74,7 +74,7 @@
   <button type="button" class="filter-chip" data-filter="filtered" aria-pressed="false">Filtered only</button>
   <button type="button" class="filter-chip" data-filter="chilled" aria-pressed="false">Chilled only</button>
   <button type="button" class="filter-chip" data-filter="open_now" aria-pressed="false">Open now</button>
-  <button type="button" class="filter-chip partner" data-filter="partner" aria-pressed="false">Cooler partner</button>
+  <button type="button" class="filter-chip partner" data-filter="partner" aria-pressed="false">Partner refill point</button>
   <button type="button" class="filter-chip" data-filter="hide_stale" aria-pressed="false">Hide points not updated in 3+ years</button>
 </div>
 </div>
@@ -86,7 +86,7 @@
   <div class="legend" aria-label="Map key">
   <span><span class="legend-swatch fountain"></span>Public fountain</span>
   <span><span class="legend-swatch cafe"></span>Café or shop</span>
-  <span><span class="legend-swatch partner"></span>Cooler partner</span>
+  <span><span class="legend-swatch partner"></span>Partner refill point</span>
   <span><span class="legend-swatch stale"></span><span data-stale-legend>Not updated in 3+ years</span></span>
 </div>
 </div>
@@ -120,11 +120,11 @@
         </details>
         <details>
           <summary>Where does the data come from?</summary>
-          <p>Public fountains, taps and café fill points come from OpenStreetMap. Cooler partner businesses are a separate list and are never merged with OSM data.</p>
+          <p>Public fountains, taps and café fill points come from OpenStreetMap. Partner refill points are listed by the venues themselves, kept as a separate list and never merged with OSM data.</p>
         </details>
         <details>
           <summary>What if a point is wrong?</summary>
-          <p>Use “Is this wrong? Fix on OpenStreetMap” in the popup, or <a href="../list-your-business/">contact us</a> about a partner listing.</p>
+          <p>Use “Is this wrong? Fix on OpenStreetMap” in the popup, or <a href="../list-your-business/">contact us</a> about a partner refill point.</p>
         </details>
       </section>
     </div>
@@ -138,7 +138,7 @@
     <p>For partner posters and window stickers: “Skip the plastic. Find a tap.”</p>
     <p>
       <a href="../cities/">Cities</a> ·
-      <a href="../list-your-business/">List your business</a> ·
+      <a href="../list-your-business/">List your venue</a> ·
       <a href="../privacy/">Privacy</a> ·
       <a href="../terms/">Terms</a>
     </p>
@@ -148,9 +148,9 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/opening_hours@3.8.0/opening_hours+deps.min.js"></script>
-  <script src="../js/config.js?v=585ca07"></script>
-  <script src="../js/map-provider.js?v=585ca07"></script>
-  <script src="../js/app.js?v=585ca07"></script>
-  <script src="../js/pwa.js?v=585ca07"></script>
+  <script src="../js/config.js?v=26f2613"></script>
+  <script src="../js/map-provider.js?v=26f2613"></script>
+  <script src="../js/app.js?v=26f2613"></script>
+  <script src="../js/pwa.js?v=26f2613"></script>
 </body>
 </html>

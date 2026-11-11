@@ -161,7 +161,7 @@ def nav(cfg, current: str, depth: int = 0) -> str:
     links = [
         (site_href("", depth), "Map", "home"),
         (site_href("cities/", depth), "Cities", "cities"),
-        (site_href("list-your-business/", depth), "List your business", "list"),
+        (site_href("list-your-business/", depth), "List your venue", "list"),
         (site_href("privacy/", depth), "Privacy", "privacy"),
     ]
     parts = []
@@ -204,7 +204,7 @@ def footer(cfg, depth: int = 0) -> str:
     <p>For partner posters and window stickers: “{poster}”</p>
     <p>
       <a href="{site_href("cities/", depth)}">Cities</a> ·
-      <a href="{site_href("list-your-business/", depth)}">List your business</a> ·
+      <a href="{site_href("list-your-business/", depth)}">List your venue</a> ·
       <a href="{site_href("privacy/", depth)}">Privacy</a> ·
       <a href="{site_href("terms/", depth)}">Terms</a>
     </p>
@@ -267,7 +267,7 @@ def legend() -> str:
     return """<div class="legend" aria-label="Map key">
   <span><span class="legend-swatch fountain"></span>Public fountain</span>
   <span><span class="legend-swatch cafe"></span>Café or shop</span>
-  <span><span class="legend-swatch partner"></span>Cooler partner</span>
+  <span><span class="legend-swatch partner"></span>Partner refill point</span>
   <span><span class="legend-swatch stale"></span><span data-stale-legend>Not updated in 3+ years</span></span>
 </div>"""
 
@@ -280,7 +280,7 @@ def filter_chips() -> str:
   <button type="button" class="filter-chip" data-filter="filtered" aria-pressed="false">Filtered only</button>
   <button type="button" class="filter-chip" data-filter="chilled" aria-pressed="false">Chilled only</button>
   <button type="button" class="filter-chip" data-filter="open_now" aria-pressed="false">Open now</button>
-  <button type="button" class="filter-chip partner" data-filter="partner" aria-pressed="false">Cooler partner</button>
+  <button type="button" class="filter-chip partner" data-filter="partner" aria-pressed="false">Partner refill point</button>
   <button type="button" class="filter-chip" data-filter="hide_stale" aria-pressed="false">Hide points not updated in 3+ years</button>
 </div>"""
 
@@ -362,11 +362,11 @@ def page_index(cfg, cities) -> str:
     <section class="hero">
       <div class="wrap">
         <h1 class="tagline">{escape(tagline)}</h1>
-        <p class="lede">Free drinking water and bottle-fill points across the UK. No app, no account. Free for anyone, no purchase needed. Public fountains and café taps come from OpenStreetMap; cooler partners are listed separately.</p>
+        <p class="lede">Free drinking water and bottle-fill points across the UK. No app, no account. Free for anyone, no purchase needed. Public fountains and café taps come from OpenStreetMap; refill points listed by venues themselves are shown separately.</p>
         <p class="refill-total" data-refill-total="uk" hidden><span class="refill-total-icon" aria-hidden="true"></span><span><strong data-refill-number></strong><span data-refill-label></span></span></p>
         <div class="hero-actions">
           <button type="button" class="btn btn-primary js-locate" id="locate-btn">Find water near me</button>
-          <a class="btn btn-ghost" href="{site_href("list-your-business/", depth)}">List your business</a>
+          <a class="btn btn-ghost" href="{site_href("list-your-business/", depth)}">List your venue</a>
         </div>
       </div>
     </section>
@@ -403,11 +403,11 @@ def faq_jsonld(city_name: str, osm_count: int) -> str:
     faqs = [
         (
             f"Are these water refill points in {city_name} free?",
-            f"Yes. Every point on SipSpot is free for anyone, with no purchase needed. OpenStreetMap points tagged as charging a fee, or as customers-only, private or no public access, are left off the map. Cooler partners must be marked walk-in free.",
+            f"Yes. Every point on SipSpot is free for anyone, with no purchase needed. OpenStreetMap points tagged as charging a fee, or as customers-only, private or no public access, are left off the map. Partner refill points, listed by the venue itself, must be free to walk in and use.",
         ),
         (
             f"Where does the {city_name} map data come from?",
-            "Public fountains, taps and café fill points come from OpenStreetMap and are updated from the official OSM database. Cooler partner businesses are a separate list maintained by SipSpot and are never merged with the OSM data.",
+            "Public fountains, taps and café fill points come from OpenStreetMap and are updated from the official OSM database. Partner refill points are taps and water coolers that venues list themselves. They are kept as a separate list and are never merged with the OSM data.",
         ),
         (
             "How often is the map updated?",
@@ -415,15 +415,15 @@ def faq_jsonld(city_name: str, osm_count: int) -> str:
         ),
         (
             "What if a point is wrong?",
-            "For an OpenStreetMap point, use the “Is this wrong? Fix on OpenStreetMap” link in the popup. For a cooler partner listing, use the List your business page to get in touch.",
+            "For an OpenStreetMap point, use the “Is this wrong? Fix on OpenStreetMap” link in the popup. For a partner refill point, use the List your venue page to get in touch.",
         ),
         (
             "When is a point open?",
             "Opening hours are shown on every point. If hours are missing we say “Hours not listed”. The Open now filter only includes points whose hours we can parse and that are open at the moment, using your device clock.",
         ),
         (
-            "How do I add a business?",
-            "Use the List your business page. There is no account, password or payment. A short form sends your details by email or a form endpoint.",
+            "How do I add my venue?",
+            "Use the List your venue page. Shops, cafés, offices, councils, shopping centres, stations and chains can list their own free tap or water cooler. There is no account, password or payment. A short form sends your details by email or a form endpoint.",
         ),
     ]
     entities = []
@@ -576,26 +576,6 @@ def breadcrumb_jsonld(cfg, city) -> str:
     return json.dumps(blob, ensure_ascii=False)
 
 
-def sponsor_slot(city, partners, depth: int = 0) -> str:
-    """Render a per-city sponsor strip only when there is a real sponsor."""
-    companies = []
-    for p in partners or []:
-        props = p.get("properties") or {}
-        if props.get("is_example"):
-            continue
-        name = props.get("partner")
-        if name and name not in companies:
-            companies.append(name)
-    if not companies:
-        return ""
-    label = " and ".join(escape(c) for c in companies)
-    return f"""<aside class="sponsor-slot">
-  <p class="label">Sponsored</p>
-  <h2>Sponsored by {label}</h2>
-  <p>Cooler partners in {escape(city["name"])} help people fill a bottle for free.</p>
-</aside>"""
-
-
 def page_redirect(cfg, from_slug: str, to_slug: str, to_name: str) -> str:
     dest = cfg["siteUrl"].rstrip("/") + f"/{to_slug}/"
     rel = site_href(f"{to_slug}/", 1)
@@ -649,7 +629,7 @@ def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
     partner_note = ""
     if city.get("partner_count"):
         n = city["partner_count"]
-        partner_note = f" There {'is' if n == 1 else 'are'} also {n} cooler partner listing{'s' if n != 1 else ''} in this area, shown separately."
+        partner_note = f" There {'is' if n == 1 else 'are'} also {n} partner refill point{'s' if n != 1 else ''} in this area, listed by the venue{'s' if n != 1 else ''} and shown separately."
     intros = city_intro_paragraphs(city, all_cities or [])
     if intros:
         first, *rest = intros
@@ -658,8 +638,7 @@ def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
             intro_html += f"<p>{escape(partner_note.strip())}</p>"
     else:
         intro_html = f'<p class="lede">{city["osm_count"]} drinking point{"s" if city["osm_count"] != 1 else ""} in and around {escape(name)}.{partner_note}</p>'
-    sponsor = sponsor_slot(city, partner_feats, depth)
-    sponsor_block = f'\n    <div class="wrap city-sponsor">\n      {sponsor}\n    </div>' if sponsor else ""
+    # No sponsor strip: partner refill points never name a supplier or cooler company.
     return f"""{head(cfg, title, desc, url, extra=extra, include_map=True, depth=depth)}
 <body class="city-page">
   <a class="skip-link" href="#map">Skip to map</a>
@@ -673,7 +652,7 @@ def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
         <button type="button" class="btn btn-primary js-locate" id="locate-btn">Find water near me</button>
       </div>
       <p class="status" id="status" role="status"></p>
-    </div>{sponsor_block}
+    </div>
     <div class="map-stage">
       <div class="wrap map-stage-inner">
         {filters()}
@@ -704,11 +683,11 @@ def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
         </details>
         <details>
           <summary>Where does the data come from?</summary>
-          <p>Public fountains, taps and café fill points come from OpenStreetMap. Cooler partner businesses are a separate list and are never merged with OSM data.</p>
+          <p>Public fountains, taps and café fill points come from OpenStreetMap. Partner refill points are listed by the venues themselves, kept as a separate list and never merged with OSM data.</p>
         </details>
         <details>
           <summary>What if a point is wrong?</summary>
-          <p>Use “Is this wrong? Fix on OpenStreetMap” in the popup, or <a href="{site_href("list-your-business/", depth)}">contact us</a> about a partner listing.</p>
+          <p>Use “Is this wrong? Fix on OpenStreetMap” in the popup, or <a href="{site_href("list-your-business/", depth)}">contact us</a> about a partner refill point.</p>
         </details>
       </section>
     </div>
@@ -761,7 +740,7 @@ def page_privacy(cfg) -> str:
       <p>{escape(brand)} is run by J Skelton, a sole trader in the United Kingdom. If you have a question about this site or about your information, email <a href="mailto:{email}">{email}</a>.</p>
       <h2>What we collect</h2>
       <p>The site is a set of static files. We do not run a user database, and we have not installed any analytics.</p>
-      <p>If you use the “List your business” form, it opens your own email app with the details you typed and addresses the message to {email}. We only see that information if you send the email. Please do not include a password or payment details. We will use what you send only to follow up about a listing.</p>
+      <p>If you use the “List your venue” form, it opens your own email app with the details you typed and addresses the message to {email}. We only see that information if you send the email. Please do not include a password or payment details. We will use what you send only to follow up about a listing.</p>
       <p>We do not set cookies. Taps on “I filled up here”, “Still here” and “Gone” are counted anonymously against that map point, so we can show totals such as “12 refills logged by SipSpot users”. We do not ask who you are. To stop spam, our counter briefly uses your IP address in hashed (scrambled) form to limit repeat taps. The IP address itself is not stored, and the hashed key is deleted within about a day. Your browser also keeps a note of your taps in local storage (not a cookie), so the same point does not ask again on this device.</p>
       <p>If you dismiss the “Install app” tip, that choice is also stored in your browser’s local storage, so we do not show it again on this device.</p>
       <h2>Location</h2>
@@ -800,7 +779,7 @@ def page_terms(cfg) -> str:
       <h1>Terms of use</h1>
       <p>{escape(brand)} is an information service run by J Skelton, a sole trader in the United Kingdom. It helps you find drinking-water and bottle-fill points that have been mapped as free to use. If you have a question, email <a href="mailto:{email}">{email}</a>.</p>
       <p>The map is a starting point, not a guarantee. Always check a refill point yourself before you rely on it. A tap may be out of order, closed, or no longer there.</p>
-      <p>Points come mainly from OpenStreetMap, which is updated by volunteers, and may also include cooler partners we list separately. Hours, access and water type can be wrong or out of date. We do not inspect every point, and we give no warranty that a point will be available, safe or suitable.</p>
+      <p>Points come mainly from OpenStreetMap, which is updated by volunteers, and may also include partner refill points that venues list themselves, which we keep separately. Hours, access and water type can be wrong or out of date. We do not inspect every point, and we give no warranty that a point will be available, safe or suitable.</p>
       <p>Public fountain, tap and café fill-point data is © OpenStreetMap contributors and licensed under the Open Database Licence (ODbL 1.0). See <a href="https://www.openstreetmap.org/copyright">openstreetmap.org/copyright</a>.</p>
     </div>
   </main>
@@ -815,25 +794,46 @@ def page_list_business(cfg) -> str:
     brand = cfg["brand"]
     tagline = cfg.get("tagline") or "Find it. Fill it. Go."
     poster = cfg.get("posterLine") or "Skip the plastic. Find a tap."
-    desc = f"List your business as a {brand} cooler partner. {poster}"
+    desc = f"List your venue’s free tap or water cooler on {brand}. Free for anyone, no purchase needed. {poster}"
     url = cfg["siteUrl"].rstrip("/") + "/list-your-business/"
     email = escape(cfg.get("contactEmail") or "")
     depth = 1
-    return f"""{head(cfg, f"List your business — {brand}", desc, url, depth=depth)}
+    return f"""{head(cfg, f"List your venue — {brand}", desc, url, depth=depth)}
 <body>
   {header(cfg, "list", depth)}
   <main class="page-body">
     <div class="wrap">
-      <h1>List your business</h1>
-      <p class="lede">Offer a free walk-in bottle fill — free for anyone, no purchase needed — and appear on {escape(brand)} as a cooler partner. There is no account, no password and no payment at this stage. {escape(tagline)}</p>
+      <h1>List your venue</h1>
+      <p class="lede">Have a tap or water cooler where anyone can fill a bottle for free, with no purchase needed? List it yourself and it will appear on {escape(brand)} as a partner refill point. There is no account, no password and no payment at this stage. {escape(tagline)}</p>
+      <p>Shops, cafés, offices, councils, shopping centres, stations and chains are all welcome. Your listing shows your venue’s name, address, hours and water type under a simple “Partner refill point” label. We never show the name of the company that supplies or services your tap or cooler.</p>
+      <p>Looking after lots of sites, for example as a council, water company, shopping centre or station landlord, or a chain? Email <a href="mailto:{email}">{email}</a> and we can add your locations together.</p>
       <div class="poster-card" aria-label="Partner poster wording">
         <p class="poster-brand">{escape(brand)}</p>
         <p class="poster-line">{escape(poster)}</p>
-        <p class="poster-caption">Suggested line for partner posters and window stickers.</p>
+        <p class="poster-caption">Suggested line for posters and window stickers at your refill point.</p>
       </div>
       <form class="form" id="partner-form" novalidate>
-        <label>Business name
+        <label>Venue or organisation name
           <input type="text" name="business" required autocomplete="organization">
+        </label>
+        <label>Type of venue
+          <select name="venue_type">
+            <option value="shop">Shop</option>
+            <option value="cafe">Café, pub or restaurant</option>
+            <option value="office">Office or workplace</option>
+            <option value="council">Council or public building</option>
+            <option value="shopping centre">Shopping centre</option>
+            <option value="station">Station or transport hub</option>
+            <option value="chain">Chain with several sites</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>What you offer
+          <select name="refill_type">
+            <option value="tap">Tap</option>
+            <option value="water cooler">Water cooler</option>
+            <option value="bottle-fill station">Bottle-fill station</option>
+          </select>
         </label>
         <label>Your name
           <input type="text" name="contact_name" required autocomplete="name">
@@ -869,7 +869,7 @@ def page_list_business(cfg) -> str:
           Free for anyone, no purchase needed (required)
         </label>
         <label>Notes <span class="hint">(optional)</span>
-          <textarea name="notes" placeholder="Where the cooler is, any access notes"></textarea>
+          <textarea name="notes" placeholder="Where the tap or cooler is, any access notes"></textarea>
         </label>
         <p class="hint">This form does not collect a password or take payment. It opens an email to {email} with the details you typed.</p>
         <button type="submit" class="btn btn-primary">Send listing request</button>

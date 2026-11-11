@@ -36,7 +36,7 @@ def api_id(feat, source: str):
         if t in ("node", "way", "relation") and i is not None and re.fullmatch(r"\d{1,12}", str(i)):
             return f"osm:{t}:{i}"
         return None
-    pid = p.get("id")
+    pid = feat.get("id") or p.get("id")  # import_partners.py puts it on the Feature
     if pid and PARTNER_ID_RE.match(str(pid)):
         return f"partner:{pid}"
     return None
