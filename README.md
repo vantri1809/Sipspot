@@ -107,7 +107,7 @@ Licence of this file: [ODbL 1.0](https://opendatacommons.org/licenses/odbl/), ©
 
 Cooler partner businesses (for example venues with a water cooler) live in a **second file**. The site loads the two files independently, draws them as two layers, and never writes a joined dataset. That is deliberate: mixing OSM data with another database and publishing the result can trigger ODbL share-alike on the other source.
 
-The copy in this repo is **example data only** (three fictional listings, clearly labelled). Remove it before launch and import a real list:
+`data/partners.geojson` ships as an empty FeatureCollection. Import a real list when you have one:
 
 ```bash
 python3 scripts/import_partners.py path/to/partners.csv -o data/partners.geojson
@@ -236,4 +236,4 @@ Advertisement slots are marked “Advertisement” and sit below the map, never 
 
 - Code in this repository: you may treat it as CC0 / public domain unless a later licence file says otherwise.
 - `data/points.geojson`: ODbL 1.0, © OpenStreetMap contributors.
-- `data/partners.geojson`: not an OSM derivative. Example rows in the shipped file are fictional.
+- `data/partners.geojson`: not an OSM derivative. It ships empty; add real partner listings here and do not merge them with the OSM file.

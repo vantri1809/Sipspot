@@ -85,7 +85,7 @@
     "population": 472000,
     "zoom": 12,
     "osm_count": 27,
-    "partner_count": 1
+    "partner_count": 0
   },
   {
     "slug": "cambridge",
@@ -239,7 +239,7 @@
     "population": 8799800,
     "zoom": 12,
     "osm_count": 645,
-    "partner_count": 1
+    "partner_count": 0
   },
   {
     "slug": "luton",
@@ -261,7 +261,7 @@
     "population": 552000,
     "zoom": 12,
     "osm_count": 26,
-    "partner_count": 1
+    "partner_count": 0
   },
   {
     "slug": "milton-keynes",
@@ -393,7 +393,7 @@
     "population": 129794,
     "zoom": 12,
     "osm_count": 11,
-    "partner_count": 1
+    "partner_count": 0
   },
   {
     "slug": "sheffield",

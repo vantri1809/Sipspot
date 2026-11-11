@@ -1,4 +1,1 @@
 name,address,postcode,lat,lon,partner,hours,verified_date,logo_url,refill_offered,water_type,chilled,walk_in_free
-EXAMPLE — Riverside Café (demo listing),"1 Example Wharf, London, SE1 0AA",SE1 0AA,51.5080,-0.1010,Example Water Co,Mo-Fr 08:00-17:00; Sa 09:00-16:00,2026-11-01,,free,tap,no,yes
-EXAMPLE — Station News (demo listing),"22 Demo Arcade, Manchester, M1 1AB",M1 1AB,53.4780,-2.2305,Example Water Co,Mo-Su 07:00-19:00,2026-11-01,,free,filtered,yes,yes
-EXAMPLE — Harbour Gym (demo listing),"5 Sample Quay, Bristol, BS1 4AA",BS1 4AA,,,Example Water Co,Mo-Fr 06:00-21:00; Sa-Su 08:00-18:00,2026-11-01,,free,chilled filtered,yes,yes
