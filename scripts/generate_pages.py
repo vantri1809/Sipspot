@@ -519,7 +519,7 @@ def city_intro_paragraphs(city, all_cities) -> list[str]:
     slug = city["slug"]
     if slug == "london":
         largest = max((c["osm_count"] for c in all_cities), default=0)
-        lead = f"London has {n} OpenStreetMap drinking-water {pts} on SipSpot"
+        lead = f"London has {n} drinking {pts} on SipSpot"
         if n >= largest:
             lead += ", more than any other city in our gazetteer"
         lead += "."
@@ -536,7 +536,7 @@ def city_intro_paragraphs(city, all_cities) -> list[str]:
             paras.append(f"The map covers points within {rtxt} km of the centre.")
         return paras
     if slug in ("manchester", "bournemouth"):
-        paras = [f"{name} have {n} OpenStreetMap drinking-water {pts} on SipSpot."]
+        paras = [f"{name} have {n} drinking {pts} on SipSpot."]
         if mix:
             paras.append(mix)
         if slug == "manchester":
@@ -547,7 +547,7 @@ def city_intro_paragraphs(city, all_cities) -> list[str]:
     if slug in ("bristol", "birmingham", "cardiff"):
         r = city.get("radius_km")
         rtxt = int(r) if r is not None and float(r).is_integer() else r
-        paras = [f"{name} has {n} OpenStreetMap drinking-water {pts} on SipSpot, within {rtxt} km of the centre."]
+        paras = [f"{name} has {n} drinking {pts} on SipSpot, within {rtxt} km of the centre."]
         if mix:
             paras.append(mix)
         return paras
