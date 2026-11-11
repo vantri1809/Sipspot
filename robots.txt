@@ -1,3 +1,2 @@
 User-agent: *
-Allow: /
-Sitemap: https://sipspot.co.uk/sitemap.xml
+Disallow: /
