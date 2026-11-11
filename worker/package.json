@@ -1,0 +1,18 @@
+{
+  "name": "sipspot-api",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SipSpot refill counter and Still here / Gone votes (Cloudflare Worker + D1)",
+  "type": "module",
+  "scripts": {
+    "build:index": "python3 ../scripts/build_worker_index.py",
+    "dev": "npm run build:index && wrangler dev --local --port 8787",
+    "db:init:local": "wrangler d1 execute sipspot-api --local --file=./schema.sql",
+    "db:init:remote": "wrangler d1 execute sipspot-api --remote --file=./schema.sql",
+    "deploy": "npm run build:index && wrangler deploy",
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.160.1"
+  }
+}

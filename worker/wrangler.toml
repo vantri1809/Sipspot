@@ -1,0 +1,33 @@
+# SipSpot API: refill counter + Still here / Gone votes.
+# Deploy notes are in worker/README.md. Never commit secrets here:
+# IP_SALT is set with `wrangler secret put IP_SALT`.
+name = "sipspot-api"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+# Served on its own subdomain so the apex can stay DNS-only to GitHub Pages.
+routes = [
+  { pattern = "api.sipspot.co.uk", custom_domain = true }
+]
+
+[build]
+# Bakes the known point ids and point -> city map into the Worker bundle.
+command = "python3 ../scripts/build_worker_index.py"
+watch_dir = "../data"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sipspot-api"
+# Replace with the id printed by `wrangler d1 create sipspot-api`.
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[triggers]
+# Hourly clean-up of expired throttle keys.
+crons = ["17 * * * *"]
+
+[vars]
+ALLOWED_ORIGINS = "https://sipspot.co.uk,https://www.sipspot.co.uk,https://vantri1809.github.io"
+ALLOW_LOCALHOST = "false"
+POINT_COOLDOWN_SECONDS = "7200"
+DAILY_CAP = "40"

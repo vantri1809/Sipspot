@@ -1134,6 +1134,110 @@ a.feedback-osm-link:focus-visible {
   outline-offset: 2px;
 }
 
+/* "I filled up here" refill counter */
+.refill-box {
+  margin: 0.55rem 0 0.35rem;
+}
+.refill-btn {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--leaf);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--leaf-dark);
+}
+.refill-btn::before {
+  content: "";
+  width: 0.8rem;
+  height: 1.05rem;
+  flex: 0 0 auto;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'%3E%3Cpath d='M6 0C2.4 4.3 0 7.4 0 10a6 6 0 0 0 12 0C12 7.4 9.6 4.3 6 0z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'%3E%3Cpath d='M6 0C2.4 4.3 0 7.4 0 10a6 6 0 0 0 12 0C12 7.4 9.6 4.3 6 0z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.refill-btn:hover {
+  background: var(--leaf-dark);
+}
+.refill-btn:focus-visible {
+  outline: 2px solid var(--leaf-dark);
+  outline-offset: 2px;
+}
+.refill-btn:disabled,
+.refill-btn.is-done {
+  background: #e8f5e9;
+  color: var(--leaf-dark);
+  box-shadow: inset 0 0 0 2px var(--leaf);
+  cursor: default;
+}
+.refill-thanks {
+  margin: 0.45rem 0 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--leaf-dark);
+}
+.refill-thanks.is-error {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.refill-count {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.feedback-counts:empty { display: none; }
+.feedback-count {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+.feedback-count.is-here {
+  color: var(--leaf-dark);
+  font-weight: 600;
+}
+
+.refill-total {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 38rem;
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--leaf);
+  border-radius: 12px;
+  background: var(--paper-2);
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+.refill-total[hidden] { display: none; }
+.refill-total strong {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--leaf-dark);
+}
+.refill-total-icon {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 4c-3.5 4.2-5 6.5-5 8.6a5 5 0 0 0 10 0C17 10.5 15.5 8.2 12 4z' fill='%23fff'/%3E%3C/svg%3E") center / 70% no-repeat;
+}
+.city-page .refill-total { margin: 0.35rem 0 0.6rem; font-size: 0.92rem; padding: 0.45rem 0.7rem; }
+.city-page .refill-total strong { font-size: 1.1rem; }
+
 /* Use my location control (on the map) and you-are-here marker */
 .sipspot-locate-control {
   margin: 0 10px 12px 0;

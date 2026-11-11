@@ -363,6 +363,7 @@ def page_index(cfg, cities) -> str:
       <div class="wrap">
         <h1 class="tagline">{escape(tagline)}</h1>
         <p class="lede">Free drinking water and bottle-fill points across the UK. No app, no account. Free for anyone, no purchase needed. Public fountains and café taps come from OpenStreetMap; cooler partners are listed separately.</p>
+        <p class="refill-total" data-refill-total="uk" hidden><span class="refill-total-icon" aria-hidden="true"></span><span><strong data-refill-number></strong><span data-refill-label></span></span></p>
         <div class="hero-actions">
           <button type="button" class="btn btn-primary js-locate" id="locate-btn">Find water near me</button>
           <a class="btn btn-ghost" href="{site_href("list-your-business/", depth)}">List your business</a>
@@ -667,6 +668,7 @@ def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
     <div class="wrap city-intro">
       <h1>Free water refill points in {escape(name)}</h1>
       {intro_html}
+      <p class="refill-total" data-refill-total="city" hidden><span class="refill-total-icon" aria-hidden="true"></span><span><strong data-refill-number></strong><span data-refill-label></span></span></p>
       <div class="hero-actions">
         <button type="button" class="btn btn-primary js-locate" id="locate-btn">Find water near me</button>
       </div>
@@ -760,7 +762,7 @@ def page_privacy(cfg) -> str:
       <h2>What we collect</h2>
       <p>The site is a set of static files. We do not run a user database, and we have not installed any analytics.</p>
       <p>If you use the “List your business” form, it opens your own email app with the details you typed and addresses the message to {email}. We only see that information if you send the email. Please do not include a password or payment details. We will use what you send only to follow up about a listing.</p>
-      <p>We do not set cookies. The “Still here” and “Gone” buttons on a map point store your choice in your browser’s local storage (not a cookie), so the same point does not ask again on this device. That vote is not sent to us, because no feedback server is set up yet.</p>
+      <p>We do not set cookies. Taps on “I filled up here”, “Still here” and “Gone” are counted anonymously against that map point, so we can show totals such as “12 refills logged by SipSpot users”. We do not ask who you are. To stop spam, our counter briefly uses your IP address in hashed (scrambled) form to limit repeat taps. The IP address itself is not stored, and the hashed key is deleted within about a day. Your browser also keeps a note of your taps in local storage (not a cookie), so the same point does not ask again on this device.</p>
       <p>If you dismiss the “Install app” tip, that choice is also stored in your browser’s local storage, so we do not show it again on this device.</p>
       <h2>Location</h2>
       <p>If you tap “Find water near me”, your browser may share your location with this page so the map can centre on you and estimate a walking distance. That location stays in your browser. It is not sent to us.</p>
@@ -769,7 +771,7 @@ def page_privacy(cfg) -> str:
       <p>The site also loads fonts from Google Fonts (fonts.googleapis.com and fonts.gstatic.com) and map scripts from unpkg.com and cdn.jsdelivr.net. Those providers may also see your IP address.</p>
       <p>The Directions buttons open Google Maps or Apple Maps, which have their own privacy policies. We do not receive the route you follow.</p>
       <h2>Hosting</h2>
-      <p>The site is hosted on GitHub Pages. The sipspot.co.uk domain is set up with Cloudflare DNS.</p>
+      <p>The site is hosted on GitHub Pages. The sipspot.co.uk domain is set up with Cloudflare DNS. The tap counter runs on Cloudflare Workers.</p>
       <h2>Map data</h2>
       <p>Public fountain, tap and café fill-point data comes from OpenStreetMap and is licensed under the Open Database Licence (ODbL 1.0). © OpenStreetMap contributors — <a href="https://www.openstreetmap.org/copyright">www.openstreetmap.org/copyright</a>. Partner listings, when we add any, are a separate file and are not combined with the OpenStreetMap data.</p>
       <h2>Your rights</h2>

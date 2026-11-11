@@ -190,8 +190,10 @@
           '<button type="button" class="feedback-btn feedback-gone" data-vote="gone">Gone</button>' +
         "</div>";
     }
+    const apiId = apiEnabled() ? apiPointId(feature, "osm") : null;
     return (
       '<div class="point-feedback" data-osm-type="' + escapeHtml(p.osm_type) +
+      (apiId ? '" data-point-id="' + escapeHtml(apiId) : "") +
       '" data-osm-id="' + escapeHtml(p.osm_id) +
       '" data-lat="' + ll.lat +
       '" data-lon="' + ll.lon +
@@ -224,6 +226,28 @@
     const osmId = /^-?\d+$/.test(osmIdRaw) ? Number(osmIdRaw) : osmIdRaw;
     const ts = new Date().toISOString();
     saveStoredVote(osmType, osmIdRaw, vote);
+    const apiId = box.getAttribute("data-point-id");
+    box.innerHTML = feedbackThanksHtml(vote, box.getAttribute("data-lat"), box.getAttribute("data-lon"));
+    if (apiEnabled() && apiId) {
+      const prev = apiState.points[apiId] ? Object.assign({}, apiState.points[apiId]) : null;
+      if (prev) {
+        const bumped = Object.assign({}, prev);
+        bumped[vote] = (prev[vote] || 0) + 1;
+        if (vote === "here") bumped.last_here = ts.slice(0, 10);
+        apiState.points[apiId] = bumped;
+      }
+      renderFeedbackCounts(box);
+      apiRequest("/api/vote", { method: "POST", body: { id: apiId, vote: vote } }).then(function (r) {
+        if (r.ok && r.body && r.body.point) rememberPoint(r.body.point);
+        else if (prev) apiState.points[apiId] = prev;
+        paintPoint(apiId);
+      }).catch(function () {
+        /* the vote is still kept in this browser */
+        if (prev) apiState.points[apiId] = prev;
+        paintPoint(apiId);
+      });
+      return;
+    }
     postFeedbackVote({
       osm_type: osmType,
       osm_id: osmId,
@@ -231,7 +255,6 @@
       ts: ts,
       page: window.location.pathname || "/"
     });
-    box.innerHTML = feedbackThanksHtml(vote, box.getAttribute("data-lat"), box.getAttribute("data-lon"));
   }
 
   function indexFeedbackOverlay(data) {
@@ -260,6 +283,384 @@
     if (cfg.withVersion) url = cfg.withVersion(url);
     return loadJson(url).then(indexFeedbackOverlay).catch(function () {
       state.feedbackByKey = {};
+    });
+  }
+
+  /* ---------- Refill counter + shared Still here / Gone counts ----------
+   * Talks to the SipSpot API Worker at cfg.apiBase (e.g.
+   * https://api.sipspot.co.uk). With no apiBase the refill button and
+   * counters stay hidden and Still here / Gone keep working locally.
+   * Numbers only ever come from the API; if it cannot be reached we show
+   * nothing rather than a guess. */
+  const REFILL_STORE = "sipspot-refills-v1";
+  const REFILL_COOLDOWN_MS = 2 * 60 * 60 * 1000;
+  const API_TIMEOUT_MS = 6000;
+  const POINT_CACHE_MS = 30 * 1000;
+  const API_ID_RE = /^(?:osm:(?:node|way|relation):\d{1,12}|partner:[A-Za-z0-9][A-Za-z0-9._-]{0,99})$/;
+  const apiState = { points: {}, uk: null, city: null, reachable: null };
+
+  function apiBase() {
+    return String(cfg.apiBase || "").trim().replace(/\/+$/, "");
+  }
+
+  function apiEnabled() {
+    return !!apiBase();
+  }
+
+  function apiPointId(feature, source) {
+    const p = (feature && feature.properties) || {};
+    let id = null;
+    if (source === "partner") {
+      if (p.id != null && p.id !== "") id = "partner:" + String(p.id);
+    } else if (p.osm_type && p.osm_id != null) {
+      id = "osm:" + String(p.osm_type) + ":" + String(p.osm_id);
+    }
+    return id && API_ID_RE.test(id) ? id : null;
+  }
+
+  function apiRequest(path, options) {
+    const opts = options || {};
+    const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(function () { ctrl.abort(); }, API_TIMEOUT_MS) : null;
+    const init = {
+      method: opts.method || "GET",
+      mode: "cors",
+      credentials: "omit",
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+      signal: ctrl ? ctrl.signal : undefined
+    };
+    if (opts.body) {
+      init.headers["Content-Type"] = "application/json";
+      init.body = JSON.stringify(opts.body);
+    }
+    return fetch(apiBase() + path, init).then(function (res) {
+      return res.json().catch(function () { return null; }).then(function (body) {
+        return { status: res.status, ok: res.ok, body: body || {} };
+      });
+    }).finally(function () {
+      if (timer) clearTimeout(timer);
+    });
+  }
+
+  function formatCount(n) {
+    return Number(n || 0).toLocaleString("en-GB");
+  }
+
+  function readRefillLog() {
+    try {
+      const raw = localStorage.getItem(REFILL_STORE);
+      const data = raw ? JSON.parse(raw) : {};
+      return data && typeof data === "object" ? data : {};
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function writeRefillLog(all) {
+    const now = Date.now();
+    Object.keys(all).forEach(function (k) {
+      if (!(now - Number(all[k]) < REFILL_COOLDOWN_MS)) delete all[k];
+    });
+    try {
+      localStorage.setItem(REFILL_STORE, JSON.stringify(all));
+    } catch (err) {
+      /* private mode or quota: the server still throttles */
+    }
+  }
+
+  function lastRefillAt(id) {
+    const t = Number(readRefillLog()[id]);
+    return Number.isFinite(t) ? t : null;
+  }
+
+  function refillCoolingDown(id) {
+    const t = lastRefillAt(id);
+    return t != null && Date.now() - t < REFILL_COOLDOWN_MS;
+  }
+
+  function setRefillLogged(id, when) {
+    const all = readRefillLog();
+    if (when == null) delete all[id];
+    else all[id] = when;
+    writeRefillLog(all);
+  }
+
+  function minutesLeft(id) {
+    const t = lastRefillAt(id);
+    if (t == null) return 0;
+    return Math.max(1, Math.ceil((REFILL_COOLDOWN_MS - (Date.now() - t)) / 60000));
+  }
+
+  function waitPhrase(mins) {
+    if (mins >= 90) return "about 2 hours";
+    if (mins >= 55) return "about an hour";
+    return mins + " minute" + (mins === 1 ? "" : "s");
+  }
+
+  function refillBlock(feature, source) {
+    if (!apiEnabled()) return "";
+    const id = apiPointId(feature, source);
+    if (!id) return "";
+    return (
+      '<div class="refill-box" data-point-id="' + escapeHtml(id) + '">' +
+        '<button type="button" class="refill-btn">I filled up here</button>' +
+        '<p class="refill-thanks" role="status" hidden></p>' +
+        '<p class="refill-count" hidden></p>' +
+      "</div>"
+    );
+  }
+
+  function refillCountText(n) {
+    if (!n) return "No refills logged here yet. Tap the button when you fill up.";
+    return formatCount(n) + (n === 1 ? " refill" : " refills") + " logged here by SipSpot users";
+  }
+
+  function renderRefillBox(box, opts) {
+    if (!box) return;
+    const o = opts || {};
+    const id = box.getAttribute("data-point-id");
+    const btn = $(".refill-btn", box);
+    const thanks = $(".refill-thanks", box);
+    const count = $(".refill-count", box);
+    const rec = apiState.points[id];
+    const cooling = refillCoolingDown(id);
+    /* If the counter service cannot be reached, hide the button rather
+     * than offer a tap we cannot count. */
+    box.hidden = apiState.reachable === false && !o.message;
+    if (btn) {
+      btn.disabled = cooling;
+      btn.classList.toggle("is-done", cooling);
+      btn.textContent = cooling ? "Refill logged" : "I filled up here";
+      btn.setAttribute("aria-disabled", cooling ? "true" : "false");
+    }
+    if (thanks) {
+      let msg = o.message || "";
+      if (!msg && cooling) msg = "Thanks! You can log another refill here in " + waitPhrase(minutesLeft(id)) + ".";
+      thanks.textContent = msg;
+      thanks.hidden = !msg;
+      thanks.classList.toggle("is-error", !!o.isError);
+    }
+    if (count) {
+      if (rec && typeof rec.refills === "number") {
+        count.textContent = refillCountText(rec.refills);
+        count.hidden = false;
+      } else {
+        count.textContent = "";
+        count.hidden = true;
+      }
+    }
+  }
+
+  function voteCountsHtml(rec) {
+    if (!rec) return "";
+    const bits = [];
+    if (rec.here > 0) {
+      let t = "Confirmed still here by " + formatCount(rec.here) + (rec.here === 1 ? " person" : " people");
+      const when = rec.last_here ? confirmDateLabel(rec.last_here) : null;
+      if (when) t += ", most recently on " + when;
+      bits.push('<p class="feedback-count is-here">' + escapeHtml(t) + ".</p>");
+    }
+    if (rec.gone > 0) {
+      bits.push(
+        '<p class="feedback-count is-gone">' +
+        escapeHtml(formatCount(rec.gone) + (rec.gone === 1 ? " person has" : " people have") + " reported it gone.") +
+        "</p>"
+      );
+    }
+    return bits.join("");
+  }
+
+  function renderFeedbackCounts(box) {
+    if (!box) return;
+    const id = box.getAttribute("data-point-id");
+    let el = $(".feedback-counts", box);
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "feedback-counts";
+      box.appendChild(el);
+    }
+    el.innerHTML = id ? voteCountsHtml(apiState.points[id]) : "";
+  }
+
+  function hydrateFeedbackBox(box) {
+    const osmType = box.getAttribute("data-osm-type");
+    const osmId = box.getAttribute("data-osm-id");
+    const stored = getStoredVote(osmType, osmId);
+    if (stored && (stored.vote === "here" || stored.vote === "gone") && $(".feedback-btn", box)) {
+      box.innerHTML = feedbackThanksHtml(stored.vote, box.getAttribute("data-lat"), box.getAttribute("data-lon"));
+    }
+    renderFeedbackCounts(box);
+  }
+
+  function rememberPoint(rec) {
+    if (!rec || !rec.id) return;
+    apiState.points[rec.id] = {
+      refills: Number(rec.refills) || 0,
+      here: Number(rec.here) || 0,
+      gone: Number(rec.gone) || 0,
+      last_here: rec.last_here || null,
+      last_gone: rec.last_gone || null,
+      fetchedAt: Date.now()
+    };
+  }
+
+  function boxesFor(id, root) {
+    return $all(".refill-box, .point-feedback", root || document).filter(function (el) {
+      return el.getAttribute("data-point-id") === id;
+    });
+  }
+
+  function paintPoint(id, root) {
+    boxesFor(id, root).forEach(function (el) {
+      if (el.classList.contains("refill-box")) renderRefillBox(el);
+      else renderFeedbackCounts(el);
+    });
+  }
+
+  function fetchPoint(id) {
+    if (!apiEnabled() || !id) return Promise.resolve(null);
+    const cached = apiState.points[id];
+    if (cached && Date.now() - cached.fetchedAt < POINT_CACHE_MS) return Promise.resolve(cached);
+    return apiRequest("/api/point/" + encodeURIComponent(id)).then(function (r) {
+      apiState.reachable = r.status < 500;
+      if (!r.ok || !r.body || r.body.ok !== true) return null;
+      rememberPoint(r.body);
+      return apiState.points[id];
+    }).catch(function () {
+      apiState.reachable = false; /* API unreachable: leave counts hidden */
+      return null;
+    });
+  }
+
+  function onPopupOpened(el, relayout) {
+    if (!el) return;
+    $all(".point-feedback", el).forEach(hydrateFeedbackBox);
+    const boxes = $all(".refill-box", el);
+    boxes.forEach(function (b) { renderRefillBox(b); });
+    if (relayout) relayout();
+    const ids = {};
+    boxes.concat($all(".point-feedback[data-point-id]", el)).forEach(function (b) {
+      const id = b.getAttribute("data-point-id");
+      if (id) ids[id] = true;
+    });
+    Object.keys(ids).forEach(function (id) {
+      fetchPoint(id).then(function () {
+        paintPoint(id, el);
+        if (relayout) relayout();
+      });
+    });
+  }
+
+  function submitRefill(box) {
+    const id = box && box.getAttribute("data-point-id");
+    if (!id || !apiEnabled()) return;
+    if (refillCoolingDown(id)) {
+      renderRefillBox(box);
+      return;
+    }
+    const prev = apiState.points[id] ? Object.assign({}, apiState.points[id]) : null;
+    const prevUk = apiState.uk;
+    const prevCity = apiState.city;
+    /* Optimistic: thank them straight away and nudge the visible counts. */
+    setRefillLogged(id, Date.now());
+    if (prev) apiState.points[id] = Object.assign({}, prev, { refills: prev.refills + 1 });
+    if (apiState.uk != null) apiState.uk += 1;
+    if (apiState.city != null && state.city) apiState.city += 1;
+    paintPoint(id);
+    renderTotals();
+    renderRefillBox(box, { message: "Nice one — that’s a bottle saved." });
+
+    function revert(msg) {
+      setRefillLogged(id, null);
+      if (prev) apiState.points[id] = prev;
+      else delete apiState.points[id];
+      apiState.uk = prevUk;
+      apiState.city = prevCity;
+      paintPoint(id);
+      renderTotals();
+      renderRefillBox(box, { message: msg, isError: true });
+    }
+
+    apiRequest("/api/refill", { method: "POST", body: { id: id } }).then(function (r) {
+      apiState.reachable = r.status < 500;
+      if (r.ok && r.body && r.body.ok) {
+        if (r.body.point) rememberPoint(r.body.point);
+        if (r.body.uk && typeof r.body.uk.refills === "number") apiState.uk = r.body.uk.refills;
+        if (state.city && Array.isArray(r.body.cities)) {
+          r.body.cities.forEach(function (c) {
+            if (c && c.slug === state.city.slug && typeof c.refills === "number") apiState.city = c.refills;
+          });
+        }
+        paintPoint(id);
+        renderTotals();
+        renderRefillBox(box, { message: "Nice one — that’s a bottle saved." });
+        return;
+      }
+      if (r.body && r.body.error === "too_soon") {
+        /* Already counted from this connection recently: keep the local lock, undo the bump. */
+        if (prev) apiState.points[id] = prev;
+        apiState.uk = prevUk;
+        apiState.city = prevCity;
+        paintPoint(id);
+        renderTotals();
+        renderRefillBox(box, { message: "Thanks! A refill was already logged here from your connection in the last 2 hours." });
+        return;
+      }
+      if (r.status === 429 || (r.body && r.body.error === "daily_cap")) {
+        revert("Thanks! You have logged lots of refills today, so we cannot count more until tomorrow.");
+        return;
+      }
+      revert("Sorry, we could not log that just now. Please try again later.");
+    }).catch(function () {
+      apiState.reachable = false;
+      revert(navigator.onLine === false
+        ? "You seem to be offline, so we could not log that. Try again when you have signal."
+        : "Sorry, we could not log that just now. Please try again later.");
+    });
+  }
+
+  function totalsEls() {
+    return $all("[data-refill-total]");
+  }
+
+  function renderTotals() {
+    totalsEls().forEach(function (el) {
+      const scope = el.getAttribute("data-refill-total");
+      const n = scope === "city" ? apiState.city : apiState.uk;
+      const num = $("[data-refill-number]", el);
+      const label = $("[data-refill-label]", el);
+      if (n == null || !num || !label) {
+        el.hidden = true;
+        return;
+      }
+      num.textContent = formatCount(n);
+      if (scope === "city") {
+        const where = (state.city && state.city.name) || "this area";
+        label.textContent = n
+          ? (n === 1 ? " bottle saved in " : " bottles saved in ") + where + " (refills logged by SipSpot users)"
+          : " bottles saved in " + where + " so far. Tap “I filled up here” at a point to log yours.";
+      } else {
+        label.textContent = n
+          ? (n === 1 ? " bottle saved across the UK (refills logged by SipSpot users)" : " bottles saved across the UK (refills logged by SipSpot users)")
+          : " bottles saved so far. Tap “I filled up here” when you fill up to log yours.";
+      }
+      el.hidden = false;
+    });
+  }
+
+  function loadTotals() {
+    if (!apiEnabled() || !totalsEls().length) return;
+    const slug = state.city && state.city.slug;
+    const path = "/api/stats" + (slug ? "?city=" + encodeURIComponent(slug) : "");
+    apiRequest(path).then(function (r) {
+      apiState.reachable = r.status < 500;
+      if (!r.ok || !r.body || r.body.ok !== true) return;
+      if (r.body.uk && typeof r.body.uk.refills === "number") apiState.uk = r.body.uk.refills;
+      if (r.body.city && typeof r.body.city.refills === "number") apiState.city = r.body.city.refills;
+      renderTotals();
+    }).catch(function () {
+      apiState.reachable = false; /* API unreachable: counters stay hidden */
     });
   }
 
@@ -559,7 +960,7 @@
   }
 
   function isPopupControl(target) {
-    return !!(target && target.closest && target.closest(".direct-me, .point-feedback"));
+    return !!(target && target.closest && target.closest(".direct-me, .point-feedback, .refill-box"));
   }
 
   function stopPopupControlMapEvent(e) {
@@ -584,6 +985,14 @@
       const box = btn.closest(".point-feedback");
       submitFeedback(box, btn.getAttribute("data-vote"));
     }, true);
+    document.addEventListener("click", function (e) {
+      const btn = e.target && e.target.closest && e.target.closest(".refill-box .refill-btn");
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (btn.disabled) return;
+      submitRefill(btn.closest(".refill-box"));
+    }, true);
     ["pointerdown", "mousedown", "touchstart", "dblclick"].forEach(function (type) {
       document.addEventListener(type, stopPopupControlMapEvent, true);
     });
@@ -607,6 +1016,7 @@
         visitorConfirmedBlock(p) +
         (isOsmStale(p) ? '<p class="stale-note">' + escapeHtml(staleNoteText()) + "</p>" : "") +
         directionsBlock(lat, lon) +
+        refillBlock(feature, "osm") +
         feedbackBlock(feature) +
         '<div class="popup-links">' +
           '<a href="' + editUrl + '" target="_blank" rel="noopener">Is this wrong? Fix on OpenStreetMap</a>' +
@@ -647,6 +1057,7 @@
         sponsor + logo +
         "<p>" + escapeHtml(verified) + "</p>" +
         directionsBlock(lat, lon) +
+        (p.is_example ? "" : refillBlock(feature, "partner")) +
       "</div>"
     );
   }
@@ -1121,6 +1532,10 @@
     if (state.map && state.map.addLocateControl) {
       state.map.addLocateControl({ onClick: locate });
     }
+    if (state.map && state.map.onPopupOpen) {
+      state.map.onPopupOpen(onPopupOpened);
+    }
+    loadTotals();
     if (state.map && state.map.onDragStart) {
       state.map.onDragStart(function () { state.locateRecenter = false; });
     }

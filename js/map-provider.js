@@ -637,6 +637,21 @@
         onDragStart: function (fn) {
           map.on("dragstart", fn);
         },
+        /* fn(popupElement, relayout): called after a popup opens so the app
+         * can fill in live counts. relayout() re-measures the popup without
+         * resetting its content (popup.update() would re-render the HTML). */
+        onPopupOpen: function (fn) {
+          map.on("popupopen", function (e) {
+            const popup = e && e.popup;
+            if (!popup || typeof popup.getElement !== "function") return;
+            const el = popup.getElement();
+            fn(el, function () {
+              if (!popup._map) return;
+              if (typeof popup._updateLayout === "function") popup._updateLayout();
+              if (typeof popup._updatePosition === "function") popup._updatePosition();
+            });
+          });
+        },
         openPopupAt: function (groupId, lat, lon, zoom) {
           const z = Math.max(map.getZoom(), zoom || 16);
           map.setView([lat, lon], z);
