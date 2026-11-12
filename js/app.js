@@ -181,18 +181,19 @@
     if (!p.osm_type || p.osm_id == null) return "";
     const ll = featureLatLon(feature) || {};
     const stored = getStoredVote(p.osm_type, p.osm_id);
+    const apiId = apiEnabled() ? apiPointId(feature, "osm") : null;
     let inner;
     if (stored && (stored.vote === "here" || stored.vote === "gone")) {
-      inner = feedbackThanksHtml(stored.vote, ll.lat, ll.lon);
+      inner = feedbackThanksHtml(stored.vote, ll.lat, ll.lon) + reportLinkHtml(apiId);
     } else {
       inner =
         '<p class="feedback-prompt">Is this still here?</p>' +
         '<div class="feedback-actions">' +
           '<button type="button" class="feedback-btn feedback-here" data-vote="here">Still here</button>' +
           '<button type="button" class="feedback-btn feedback-gone" data-vote="gone">Gone</button>' +
+          reportButtonHtml(apiId) +
         "</div>";
     }
-    const apiId = apiEnabled() ? apiPointId(feature, "osm") : null;
     return (
       '<div class="point-feedback" data-osm-type="' + escapeHtml(p.osm_type) +
       (apiId ? '" data-point-id="' + escapeHtml(apiId) : "") +
@@ -222,20 +223,26 @@
     if (!osmType || osmIdRaw == null) return;
     if (getStoredVote(osmType, osmIdRaw)) {
       const existing = getStoredVote(osmType, osmIdRaw);
-      box.innerHTML = feedbackThanksHtml(existing.vote, box.getAttribute("data-lat"), box.getAttribute("data-lon"));
+      box.innerHTML = feedbackThanksHtml(existing.vote, box.getAttribute("data-lat"), box.getAttribute("data-lon")) +
+        reportLinkHtml(box.getAttribute("data-point-id"));
       return;
     }
     const osmId = /^-?\d+$/.test(osmIdRaw) ? Number(osmIdRaw) : osmIdRaw;
     const ts = new Date().toISOString();
     saveStoredVote(osmType, osmIdRaw, vote);
     const apiId = box.getAttribute("data-point-id");
-    box.innerHTML = feedbackThanksHtml(vote, box.getAttribute("data-lat"), box.getAttribute("data-lon"));
+    box.innerHTML = feedbackThanksHtml(vote, box.getAttribute("data-lat"), box.getAttribute("data-lon")) +
+      reportLinkHtml(apiId);
     if (apiEnabled() && apiId) {
       const prev = apiState.points[apiId] ? Object.assign({}, apiState.points[apiId]) : null;
       if (prev) {
         const bumped = Object.assign({}, prev);
         bumped[vote] = (prev[vote] || 0) + 1;
-        if (vote === "here") bumped.last_here = ts.slice(0, 10);
+        if (vote === "here") {
+          bumped.last_here = ts.slice(0, 10);
+          bumped.reports = []; /* a fresh "Still here" clears open reports */
+          delete apiState.openReports[apiId];
+        }
         apiState.points[apiId] = bumped;
       }
       renderFeedbackCounts(box);
@@ -243,6 +250,7 @@
         if (r.ok && r.body && r.body.point) rememberPoint(r.body.point);
         else if (prev) apiState.points[apiId] = prev;
         paintPoint(apiId);
+        updateListMarkers();
       }).catch(function () {
         /* the vote is still kept in this browser */
         if (prev) apiState.points[apiId] = prev;
@@ -299,7 +307,7 @@
   const API_TIMEOUT_MS = 6000;
   const POINT_CACHE_MS = 30 * 1000;
   const API_ID_RE = /^(?:osm:(?:node|way|relation):\d{1,12}|partner:[A-Za-z0-9][A-Za-z0-9._-]{0,99})$/;
-  const apiState = { points: {}, uk: null, city: null, reachable: null };
+  const apiState = { points: {}, uk: null, city: null, reachable: null, openReports: {} };
 
   function apiBase() {
     return String(cfg.apiBase || "").trim().replace(/\/+$/, "");
@@ -491,8 +499,10 @@
     const osmId = box.getAttribute("data-osm-id");
     const stored = getStoredVote(osmType, osmId);
     if (stored && (stored.vote === "here" || stored.vote === "gone") && $(".feedback-btn", box)) {
-      box.innerHTML = feedbackThanksHtml(stored.vote, box.getAttribute("data-lat"), box.getAttribute("data-lon"));
+      box.innerHTML = feedbackThanksHtml(stored.vote, box.getAttribute("data-lat"), box.getAttribute("data-lon")) +
+        reportLinkHtml(box.getAttribute("data-point-id"));
     }
+    if (reportedRecently(box.getAttribute("data-point-id"))) markReported(box, null);
     renderFeedbackCounts(box);
   }
 
@@ -504,12 +514,16 @@
       gone: Number(rec.gone) || 0,
       last_here: rec.last_here || null,
       last_gone: rec.last_gone || null,
+      reports: cleanReports(rec.reports),
       fetchedAt: Date.now()
     };
+    const open = apiState.points[rec.id].reports[0];
+    if (open) apiState.openReports[rec.id] = open;
+    else delete apiState.openReports[rec.id];
   }
 
   function boxesFor(id, root) {
-    return $all(".refill-box, .point-feedback", root || document).filter(function (el) {
+    return $all(".refill-box, .point-feedback, .report-status", root || document).filter(function (el) {
       return el.getAttribute("data-point-id") === id;
     });
   }
@@ -517,6 +531,7 @@
   function paintPoint(id, root) {
     boxesFor(id, root).forEach(function (el) {
       if (el.classList.contains("refill-box")) renderRefillBox(el);
+      else if (el.classList.contains("report-status")) renderReportStatus(el);
       else renderFeedbackCounts(el);
     });
   }
@@ -539,20 +554,276 @@
   function onPopupOpened(el, relayout) {
     if (!el) return;
     $all(".point-feedback", el).forEach(hydrateFeedbackBox);
+    $all(".report-status", el).forEach(renderReportStatus);
     const boxes = $all(".refill-box", el);
     boxes.forEach(function (b) { renderRefillBox(b); });
     if (relayout) relayout();
     const ids = {};
-    boxes.concat($all(".point-feedback[data-point-id]", el)).forEach(function (b) {
+    boxes.concat($all(".point-feedback[data-point-id], .report-status[data-point-id]", el)).forEach(function (b) {
       const id = b.getAttribute("data-point-id");
       if (id) ids[id] = true;
     });
     Object.keys(ids).forEach(function (id) {
       fetchPoint(id).then(function () {
         paintPoint(id, el);
+        updateListMarkers();
         if (relayout) relayout();
       });
     });
+  }
+
+  /* ---------- "Not working" reports ----------
+   * Anonymous: the API stores only the point id, the reason and the time.
+   * A report shows on the popup (amber) for 7 days, or until someone taps
+   * "Still here" after it. Reports never remove a point from the map. */
+  const REPORT_STORE = "sipspot-reports-v1";
+  const REPORT_REASONS = [
+    ["no_water", "No water"],
+    ["broken", "Broken"],
+    ["dirty", "Dirty/unhygienic"],
+    ["locked", "Locked/closed"],
+    ["other", "Other"]
+  ];
+  let reportFormSeq = 0;
+
+  function reportLabel(code) {
+    for (let i = 0; i < REPORT_REASONS.length; i++) {
+      if (REPORT_REASONS[i][0] === code) return REPORT_REASONS[i][1];
+    }
+    return "Other";
+  }
+
+  function cleanReports(list) {
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (r) { return r && r.reason && r.at; }).map(function (r) {
+      return { reason: String(r.reason), at: String(r.at) };
+    });
+  }
+
+  function reportButtonHtml(apiId) {
+    if (!apiId) return "";
+    return '<button type="button" class="feedback-btn feedback-broken" data-vote="broken">Not working</button>';
+  }
+
+  function reportLinkHtml(apiId) {
+    if (!apiId || !apiEnabled()) return "";
+    return '<button type="button" class="report-open-link">Not working? Report a problem</button>';
+  }
+
+  /* Partner points have no Still here / Gone, but can still be reported. */
+  function partnerReportBlock(feature) {
+    if (!apiEnabled() || !feedbackEnabled()) return "";
+    const id = apiPointId(feature, "partner");
+    if (!id) return "";
+    return (
+      '<div class="point-feedback is-report-only" data-point-id="' + escapeHtml(id) + '">' +
+        '<p class="feedback-prompt">Problem with this refill point?</p>' +
+        '<div class="feedback-actions">' + reportButtonHtml(id) + "</div>" +
+      "</div>"
+    );
+  }
+
+  function reportStatusBlock(feature, source) {
+    if (!apiEnabled()) return "";
+    const id = apiPointId(feature, source);
+    if (!id) return "";
+    return '<p class="report-status" data-point-id="' + escapeHtml(id) + '" role="status" hidden></p>';
+  }
+
+  function openReportFor(id) {
+    const rec = apiState.points[id];
+    if (rec && Array.isArray(rec.reports)) return rec.reports[0] || null;
+    return apiState.openReports[id] || null;
+  }
+
+  function reportStatusText(r) {
+    return "Reported not working: " + reportLabel(r.reason) + ", " + formatDate(r.at);
+  }
+
+  function renderReportStatus(el) {
+    if (!el) return;
+    const r = openReportFor(el.getAttribute("data-point-id"));
+    el.textContent = r ? reportStatusText(r) : "";
+    el.hidden = !r;
+  }
+
+  function readReportLog() {
+    try {
+      const raw = localStorage.getItem(REPORT_STORE);
+      const data = raw ? JSON.parse(raw) : {};
+      return data && typeof data === "object" ? data : {};
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function reportedRecently(id) {
+    if (!id) return false;
+    const t = Number(readReportLog()[id]);
+    return Number.isFinite(t) && Date.now() - t < REFILL_COOLDOWN_MS;
+  }
+
+  function saveReportLog(id) {
+    const all = readReportLog();
+    const now = Date.now();
+    Object.keys(all).forEach(function (k) {
+      if (!(now - Number(all[k]) < REFILL_COOLDOWN_MS)) delete all[k];
+    });
+    all[id] = now;
+    try {
+      localStorage.setItem(REPORT_STORE, JSON.stringify(all));
+    } catch (err) {
+      /* private mode or quota: the server still throttles */
+    }
+  }
+
+  /* Swap the report controls for a short thank-you line. */
+  function markReported(box, message) {
+    $all(".feedback-broken, .report-open-link, .report-form", box).forEach(function (n) { n.remove(); });
+    const actions = $(".feedback-actions", box);
+    if (actions && !actions.children.length) actions.remove();
+    let done = $(".report-done", box);
+    if (!done) {
+      done = document.createElement("p");
+      done.className = "report-done";
+      done.setAttribute("role", "status");
+      const counts = $(".feedback-counts", box);
+      box.insertBefore(done, counts || null);
+    }
+    done.textContent = message || "Thanks, you reported a problem here recently.";
+    if (box.classList.contains("is-report-only")) {
+      const prompt = $(".feedback-prompt", box);
+      if (prompt) prompt.remove();
+    }
+  }
+
+  function closeReportForm(box) {
+    const form = $(".report-form", box);
+    if (form) form.remove();
+    const btn = $(".feedback-broken, .report-open-link", box);
+    if (btn) {
+      btn.setAttribute("aria-expanded", "false");
+      btn.focus();
+    }
+  }
+
+  function openReportForm(box, trigger) {
+    if (!box) return;
+    const id = box.getAttribute("data-point-id");
+    if (!id) return;
+    if (reportedRecently(id)) { markReported(box, null); return; }
+    if ($(".report-form", box)) { closeReportForm(box); return; }
+    const n = ++reportFormSeq;
+    const form = document.createElement("div");
+    form.className = "report-form";
+    form.setAttribute("role", "group");
+    form.setAttribute("aria-labelledby", "report-q-" + n);
+    form.innerHTML =
+      '<p class="report-q" id="report-q-' + n + '">What’s wrong?</p>' +
+      '<div class="report-reasons">' +
+        REPORT_REASONS.map(function (r) {
+          return '<label class="report-reason"><input type="radio" name="report-reason-' + n +
+            '" value="' + r[0] + '"><span>' + escapeHtml(r[1]) + "</span></label>";
+        }).join("") +
+      "</div>" +
+      '<div class="report-actions">' +
+        '<button type="button" class="report-send" disabled>Send report</button>' +
+        '<button type="button" class="report-cancel">Cancel</button>' +
+      "</div>" +
+      '<p class="report-msg" role="status" hidden></p>' +
+      '<p class="report-privacy">Sent anonymously. We only store the point, the problem and the time.</p>';
+    const counts = $(".feedback-counts", box);
+    box.insertBefore(form, counts || null);
+    if (trigger) trigger.setAttribute("aria-expanded", "true");
+    form.addEventListener("change", function () {
+      const send = $(".report-send", form);
+      if (send) send.disabled = !$("input:checked", form);
+    });
+    const first = $("input", form);
+    if (first) first.focus();
+  }
+
+  function submitReport(box) {
+    const form = box && $(".report-form", box);
+    const id = box && box.getAttribute("data-point-id");
+    if (!form || !id) return;
+    const picked = $("input:checked", form);
+    if (!picked) return;
+    const reason = picked.value;
+    const send = $(".report-send", form);
+    const msg = $(".report-msg", form);
+    function show(text) {
+      msg.textContent = text;
+      msg.hidden = !text;
+    }
+    send.disabled = true;
+    send.textContent = "Sending…";
+    show("");
+    apiRequest("/api/report", { method: "POST", body: { id: id, reason: reason } }).then(function (r) {
+      if (r.ok && r.body && r.body.ok === true) {
+        saveReportLog(id);
+        if (r.body.point) rememberPoint(r.body.point);
+        markReported(box, "Thanks for letting us know. We’ve logged it as: " + reportLabel(reason) + ".");
+        paintPoint(id);
+        updateListMarkers();
+        return;
+      }
+      if (r.body && r.body.error === "too_soon") {
+        saveReportLog(id);
+        markReported(box, "You’ve already reported this point recently. Thank you.");
+        return;
+      }
+      send.disabled = false;
+      send.textContent = "Send report";
+      show(r.body && r.body.error === "daily_cap"
+        ? "You’ve reached today’s limit for reports. Please try again tomorrow."
+        : "Sorry, that didn’t send. Please try again.");
+    }).catch(function () {
+      send.disabled = false;
+      send.textContent = "Send report";
+      show("Sorry, that didn’t send. Please check your connection and try again.");
+    });
+  }
+
+  function reportedBadgeHtml() {
+    return '<span class="badge reported" title="Reported not working">Reported not working</span>';
+  }
+
+  function updateListMarkers() {
+    $all(".result-card[data-point-id]").forEach(function (card) {
+      const open = !!openReportFor(card.getAttribute("data-point-id"));
+      const badge = $(".badge.reported", card);
+      card.classList.toggle("is-reported", open);
+      if (open && !badge) {
+        const row = $(".result-badges", card);
+        if (row) row.insertAdjacentHTML("beforeend", " " + reportedBadgeHtml());
+      } else if (!open && badge) {
+        badge.remove();
+      }
+    });
+  }
+
+  function loadOpenReports() {
+    if (!apiEnabled()) return;
+    apiRequest("/api/open-reports").then(function (r) {
+      if (!r.ok || !r.body || r.body.ok !== true || !r.body.points) return;
+      const next = {};
+      Object.keys(r.body.points).forEach(function (id) {
+        const v = r.body.points[id];
+        if (API_ID_RE.test(id) && v && v.reason && v.at) next[id] = { reason: String(v.reason), at: String(v.at) };
+      });
+      /* Fresher per-point answers win over the list snapshot. */
+      Object.keys(apiState.points).forEach(function (id) {
+        const rec = apiState.points[id];
+        if (rec && Array.isArray(rec.reports)) {
+          if (rec.reports[0]) next[id] = rec.reports[0];
+          else delete next[id];
+        }
+      });
+      apiState.openReports = next;
+      updateListMarkers();
+      $all(".report-status").forEach(renderReportStatus);
+    }).catch(function () { /* no markers if the API cannot be reached */ });
   }
 
   function submitRefill(box) {
@@ -1176,7 +1447,21 @@
       e.preventDefault();
       e.stopPropagation();
       const box = btn.closest(".point-feedback");
+      if (btn.getAttribute("data-vote") === "broken") {
+        openReportForm(box, btn);
+        return;
+      }
       submitFeedback(box, btn.getAttribute("data-vote"));
+    }, true);
+    document.addEventListener("click", function (e) {
+      const t = e.target && e.target.closest && e.target.closest(".point-feedback .report-open-link, .report-form .report-send, .report-form .report-cancel");
+      if (!t) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const box = t.closest(".point-feedback");
+      if (t.classList.contains("report-open-link")) openReportForm(box, t);
+      else if (t.classList.contains("report-cancel")) closeReportForm(box);
+      else if (!t.disabled) submitReport(box);
     }, true);
     document.addEventListener("click", function (e) {
       const btn = e.target && e.target.closest && e.target.closest(".refill-box .refill-btn");
@@ -1213,6 +1498,7 @@
         (bottle ? "<p>" + escapeHtml(bottle) + "</p>" : "") +
         "<p class=\"popup-updated\">Last updated: " + escapeHtml(formatMonthYear(p.timestamp)) + "</p>" +
         visitorConfirmedBlock(p) +
+        reportStatusBlock(feature, "osm") +
         (isOsmStale(p) ? '<p class="stale-note">' + escapeHtml(staleNoteText()) + "</p>" : "") +
         directionsBlock(lat, lon, tripInfo(feature, "osm", name)) +
         refillBlock(feature, "osm") +
@@ -1255,8 +1541,10 @@
         logo +
         '<p class="partner-note">Listed by the venue</p>' +
         "<p>" + escapeHtml(verified) + "</p>" +
+        (p.is_example ? "" : reportStatusBlock(feature, "partner")) +
         directionsBlock(lat, lon, p.is_example ? null : tripInfo(feature, "partner", p.name || "Refill point")) +
         (p.is_example ? "" : refillBlock(feature, "partner")) +
+        (p.is_example ? "" : partnerReportBlock(feature)) +
       "</div>"
     );
   }
@@ -1398,6 +1686,14 @@
         badges.push('<span class="badge stale">May have changed</span>');
         btn.classList.add("is-stale");
       }
+      const listApiId = apiEnabled() ? apiPointId(item.feature, item.source) : null;
+      if (listApiId) {
+        btn.setAttribute("data-point-id", listApiId);
+        if (openReportFor(listApiId)) {
+          badges.push(reportedBadgeHtml());
+          btn.classList.add("is-reported");
+        }
+      }
       const hours = hoursInfo(p);
       if (hours.state === "open") badges.push('<span class="badge open">Open now</span>');
       else if (hours.state === "closed") badges.push('<span class="badge closed">Closed now</span>');
@@ -1409,7 +1705,7 @@
       btn.innerHTML =
         "<h3>" + escapeHtml(title) + "</h3>" +
         '<p class="hours-prominent"><strong>Hours:</strong> ' + escapeHtml(hours.text) + "</p>" +
-        "<div>" + badges.join(" ") + "</div>" +
+        '<div class="result-badges">' + badges.join(" ") + "</div>" +
         '<div class="meta">' + escapeHtml(bits.filter((b) => b !== hours.text && b !== "Hours not listed").join(" · ")) + "</div>";
       btn.addEventListener("click", () => {
         state.map.openPopupAt(item.source === "partner" ? "partner" : "osm", item.lat, item.lon, 16);
@@ -1734,6 +2030,7 @@
       state.map.onPopupOpen(onPopupOpened);
     }
     loadTotals();
+    loadOpenReports();
     initReturnPrompt();
     if (state.map && state.map.onDragStart) {
       state.map.onDragStart(function () { state.locateRecenter = false; });

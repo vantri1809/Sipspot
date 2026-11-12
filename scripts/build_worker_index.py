@@ -6,6 +6,8 @@ and keeps per-city refill totals up to date on write. This script bakes:
 
   cities: list of public city slugs (same pages as generate_pages.py)
   points: { "<api id>": [city index, ...] } for every OSM and partner point
+  meta:   { "<api id>": [display name, lat, lon] } so the owner-only
+          /api/reports endpoint can say which point a report is about
 
 API ids:  osm:<node|way|relation>:<id>   and   partner:<partner id>
 
@@ -54,14 +56,28 @@ def main() -> int:
     slug_index = {s: i for i, s in enumerate(slugs)}
 
     points: dict[str, list[int]] = {}
+    meta: dict[str, list] = {}
+
+    def remember(pid, feat, fallback):
+        p = feat.get("properties") or {}
+        coords = (feat.get("geometry") or {}).get("coordinates") or [None, None]
+        try:
+            lon, lat = round(float(coords[0]), 6), round(float(coords[1]), 6)
+        except (TypeError, ValueError, IndexError):
+            lat = lon = None
+        name = p.get("name") or p.get("kind") or fallback
+        meta[pid] = [str(name)[:120], lat, lon]
+
     for feat in osm:
         pid = api_id(feat, "osm")
         if pid:
             points.setdefault(pid, [])
+            remember(pid, feat, "Drinking water")
     for feat in partners:
         pid = api_id(feat, "partner")
         if pid:
             points.setdefault(pid, [])
+            remember(pid, feat, "Refill point")
     for city in cities:
         idx = slug_index[city["slug"]]
         for source, feats in (("osm", city.get("_osm") or []), ("partner", city.get("_partners") or [])):
@@ -71,7 +87,7 @@ def main() -> int:
                     points[pid].append(idx)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps({"cities": slugs, "points": points}, separators=(",", ":")), encoding="utf-8")
+    OUT.write_text(json.dumps({"cities": slugs, "points": points, "meta": meta}, separators=(",", ":")), encoding="utf-8")
     in_city = sum(1 for v in points.values() if v)
     print(f"Worker index: {len(points)} points ({in_city} in a city page), {len(slugs)} cities -> {OUT.relative_to(gp.ROOT)}")
     return 0
