@@ -557,11 +557,18 @@
 
   function submitRefill(box) {
     const id = box && box.getAttribute("data-point-id");
+    logRefill(id, function (o) { renderRefillBox(box, o); });
+  }
+
+  /* Shared by the popup button and the welcome-back prompt. show(opts)
+   * displays the outcome ({ message, isError }) wherever the tap came from. */
+  function logRefill(id, show) {
     if (!id || !apiEnabled()) return;
     if (refillCoolingDown(id)) {
-      renderRefillBox(box);
+      show({});
       return;
     }
+    clearPendingTrip(id);
     const prev = apiState.points[id] ? Object.assign({}, apiState.points[id]) : null;
     const prevUk = apiState.uk;
     const prevCity = apiState.city;
@@ -572,7 +579,7 @@
     if (apiState.city != null && state.city) apiState.city += 1;
     paintPoint(id);
     renderTotals();
-    renderRefillBox(box, { message: "Nice one — that’s a bottle saved." });
+    show({ message: "Nice one — that’s a bottle saved." });
 
     function revert(msg) {
       setRefillLogged(id, null);
@@ -582,7 +589,7 @@
       apiState.city = prevCity;
       paintPoint(id);
       renderTotals();
-      renderRefillBox(box, { message: msg, isError: true });
+      show({ message: msg, isError: true });
     }
 
     apiRequest("/api/refill", { method: "POST", body: { id: id } }).then(function (r) {
@@ -597,7 +604,7 @@
         }
         paintPoint(id);
         renderTotals();
-        renderRefillBox(box, { message: "Nice one — that’s a bottle saved." });
+        show({ message: "Nice one — that’s a bottle saved." });
         return;
       }
       if (r.body && r.body.error === "too_soon") {
@@ -607,7 +614,7 @@
         apiState.city = prevCity;
         paintPoint(id);
         renderTotals();
-        renderRefillBox(box, { message: "Thanks! A refill was already logged here from your connection in the last 2 hours." });
+        show({ message: "Thanks! A refill was already logged here from your connection in the last 2 hours." });
         return;
       }
       if (r.status === 429 || (r.body && r.body.error === "daily_cap")) {
@@ -621,6 +628,188 @@
         ? "You seem to be offline, so we could not log that. Try again when you have signal."
         : "Sorry, we could not log that just now. Please try again later.");
     });
+  }
+
+
+  /* ---------- Directions reminders ----------
+   * When someone taps a maps link we (1) show a short "don't forget"
+   * toast and (2) note the point in local storage on this device only, so
+   * that when they come back within a few hours we can ask "Did you fill
+   * up at …?". Nothing is sent anywhere unless they tap "Yes, log it". */
+  const TRIP_STORE = "sipspot-trip-v1";
+  const TRIP_MAX_AGE_MS = 4 * 60 * 60 * 1000;
+  /* Do not ask before they could plausibly have got there. */
+  const TRIP_MIN_AGE_MS = 2 * 60 * 1000;
+  const LEAVING_TOAST_MS = 2500;
+
+  function tripInfo(feature, source, name) {
+    if (!apiEnabled()) return null;
+    const id = apiPointId(feature, source);
+    if (!id) return null;
+    return { id: id, name: String(name || "this refill point") };
+  }
+
+  function tripAttrs(trip) {
+    if (!trip || !trip.id) return "";
+    return ' data-point-id="' + escapeHtml(trip.id) + '" data-point-name="' + escapeHtml(trip.name) + '"';
+  }
+
+  function readTrip() {
+    try {
+      const t = JSON.parse(localStorage.getItem(TRIP_STORE) || "null");
+      if (!t || typeof t !== "object" || !t.pointId || !API_ID_RE.test(String(t.pointId))) return null;
+      t.timestamp = Number(t.timestamp);
+      if (!Number.isFinite(t.timestamp)) return null;
+      return t;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function writeTrip(trip) {
+    try {
+      if (trip) localStorage.setItem(TRIP_STORE, JSON.stringify(trip));
+      else localStorage.removeItem(TRIP_STORE);
+    } catch (err) {
+      /* private mode or quota: no reminder, nothing else breaks */
+    }
+  }
+
+  function clearPendingTrip(id) {
+    const t = readTrip();
+    if (t && (!id || t.pointId === id)) writeTrip(null);
+  }
+
+  function ensureToast() {
+    let el = document.getElementById("sipspot-toast");
+    if (el) return el;
+    el = document.createElement("div");
+    el.id = "sipspot-toast";
+    el.className = "sipspot-toast";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    el.hidden = true;
+    document.body.appendChild(el);
+    return el;
+  }
+
+  let toastTimer = null;
+  function showToast(msg, ms) {
+    const el = ensureToast();
+    el.textContent = msg;
+    el.hidden = false;
+    /* next frame so the fade-in transition runs */
+    requestAnimationFrame(function () { el.classList.add("is-visible"); });
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.remove("is-visible");
+      toastTimer = setTimeout(function () { el.hidden = true; }, 250);
+    }, ms || LEAVING_TOAST_MS);
+  }
+
+  function onDirectionsTap(wrap) {
+    const id = wrap && wrap.getAttribute("data-point-id");
+    if (!id || !apiEnabled() || apiState.reachable === false) return;
+    if (refillCoolingDown(id)) return; /* already logged here recently */
+    writeTrip({
+      pointId: id,
+      name: wrap.getAttribute("data-point-name") || "this refill point",
+      city: state.city ? state.city.name : null,
+      timestamp: Date.now()
+    });
+    showToast("Don’t forget to tap “I filled up here” when you arrive");
+  }
+
+  let returnPromptBusy = false;
+
+  function hideReturnPrompt() {
+    const el = document.getElementById("refill-return");
+    if (el) el.remove();
+    document.body.classList.remove("has-refill-return");
+  }
+
+  function renderReturnPrompt(trip) {
+    hideReturnPrompt();
+    const el = document.createElement("section");
+    el.id = "refill-return";
+    el.className = "refill-return";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "false");
+    el.setAttribute("aria-labelledby", "refill-return-q");
+    el.innerHTML =
+      '<span class="refill-return-icon" aria-hidden="true"></span>' +
+      '<div class="refill-return-body">' +
+        '<p class="refill-return-q" id="refill-return-q" role="status" aria-live="polite"></p>' +
+        '<div class="refill-return-actions">' +
+          '<button type="button" class="btn btn-primary refill-return-yes">Yes, log it</button>' +
+          '<button type="button" class="refill-return-no">Not this time</button>' +
+        "</div>" +
+      "</div>";
+    const q = $(".refill-return-q", el);
+    q.textContent = "Did you fill up at " + trip.name + "?";
+    const yes = $(".refill-return-yes", el);
+    const no = $(".refill-return-no", el);
+    let closeTimer = null;
+
+    function finish(o) {
+      q.textContent = o.message || ("Thanks! You can log another refill here in " + waitPhrase(minutesLeft(trip.pointId)) + ".");
+      q.classList.toggle("is-error", !!o.isError);
+      yes.remove();
+      no.textContent = "Close";
+      el.classList.add("is-done");
+      if (closeTimer) clearTimeout(closeTimer);
+      closeTimer = setTimeout(hideReturnPrompt, o.isError ? 8000 : 5000);
+    }
+
+    yes.addEventListener("click", function () {
+      yes.disabled = true;
+      writeTrip(null);
+      logRefill(trip.pointId, finish);
+    });
+    no.addEventListener("click", function () {
+      if (closeTimer) clearTimeout(closeTimer);
+      writeTrip(null);
+      hideReturnPrompt();
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") no.click();
+    });
+    document.body.appendChild(el);
+    document.body.classList.add("has-refill-return");
+  }
+
+  function checkReturnPrompt() {
+    if (!apiEnabled() || returnPromptBusy) return;
+    if (document.visibilityState && document.visibilityState !== "visible") return;
+    if (document.getElementById("refill-return")) return;
+    const trip = readTrip();
+    if (!trip || trip.shown) return;
+    const age = Date.now() - trip.timestamp;
+    if (age < 0 || age > TRIP_MAX_AGE_MS) { writeTrip(null); return; }
+    if (refillCoolingDown(trip.pointId)) { writeTrip(null); return; }
+    if (age < TRIP_MIN_AGE_MS) return;
+    /* Only ask if the counter service is reachable right now. */
+    returnPromptBusy = true;
+    if (apiState.points[trip.pointId]) apiState.points[trip.pointId].fetchedAt = 0;
+    fetchPoint(trip.pointId).then(function (rec) {
+      returnPromptBusy = false;
+      if (!rec || apiState.reachable === false) return;
+      const now = readTrip();
+      if (!now || now.pointId !== trip.pointId || now.timestamp !== trip.timestamp || now.shown) return;
+      if (refillCoolingDown(trip.pointId)) { writeTrip(null); return; }
+      /* At most once per directions tap. */
+      writeTrip(Object.assign({}, now, { shown: true }));
+      renderReturnPrompt(now);
+    });
+  }
+
+  function initReturnPrompt() {
+    if (!apiEnabled()) return;
+    const t = readTrip();
+    if (t && t.shown) writeTrip(null);
+    checkReturnPrompt();
+    document.addEventListener("visibilitychange", checkReturnPrompt);
+    window.addEventListener("pageshow", function (e) { if (e.persisted) checkReturnPrompt(); });
   }
 
   function totalsEls() {
@@ -926,7 +1115,7 @@
     return /iPad|iPhone|iPod|Macintosh|Mac OS X/i.test(ua) || /Mac|iPhone|iPad|iPod/i.test(plat);
   }
 
-  function directionsBlock(lat, lon) {
+  function directionsBlock(lat, lon, trip) {
     const gmaps = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lon;
     const amaps = "https://maps.apple.com/?daddr=" + lat + "," + lon;
     const appleFirst = isApplePlatform();
@@ -938,13 +1127,14 @@
       : { href: amaps, label: "Apple Maps" };
     const id = "direct-choices-" + (++directMeSeq);
     return (
-      '<div class="direct-me">' +
+      '<div class="direct-me"' + tripAttrs(trip) + ">" +
         '<button type="button" class="direct-me-btn" aria-expanded="false" aria-controls="' + id + '" aria-haspopup="true">' +
           "Direct me there" +
         "</button>" +
         '<div class="direct-me-choices" id="' + id + '" hidden>' +
           '<a class="direct-choice" href="' + first.href + '" target="_blank" rel="noopener">' + escapeHtml(first.label) + "</a>" +
           '<a class="direct-choice" href="' + second.href + '" target="_blank" rel="noopener">' + escapeHtml(second.label) + "</a>" +
+          (trip && trip.id ? '<p class="direct-me-hint">When you get there, tap “I filled up here”.</p>' : "") +
         "</div>" +
       "</div>"
     );
@@ -996,6 +1186,12 @@
       if (btn.disabled) return;
       submitRefill(btn.closest(".refill-box"));
     }, true);
+    document.addEventListener("click", function (e) {
+      const link = e.target && e.target.closest && e.target.closest(".direct-me .direct-choice");
+      if (!link) return;
+      /* No preventDefault: the maps link opens in a new tab/app straight away. */
+      onDirectionsTap(link.closest(".direct-me"));
+    }, true);
     ["pointerdown", "mousedown", "touchstart", "dblclick"].forEach(function (type) {
       document.addEventListener(type, stopPopupControlMapEvent, true);
     });
@@ -1018,7 +1214,7 @@
         "<p class=\"popup-updated\">Last updated: " + escapeHtml(formatMonthYear(p.timestamp)) + "</p>" +
         visitorConfirmedBlock(p) +
         (isOsmStale(p) ? '<p class="stale-note">' + escapeHtml(staleNoteText()) + "</p>" : "") +
-        directionsBlock(lat, lon) +
+        directionsBlock(lat, lon, tripInfo(feature, "osm", name)) +
         refillBlock(feature, "osm") +
         feedbackBlock(feature) +
         '<div class="popup-links">' +
@@ -1059,7 +1255,7 @@
         logo +
         '<p class="partner-note">Listed by the venue</p>' +
         "<p>" + escapeHtml(verified) + "</p>" +
-        directionsBlock(lat, lon) +
+        directionsBlock(lat, lon, p.is_example ? null : tripInfo(feature, "partner", p.name || "Refill point")) +
         (p.is_example ? "" : refillBlock(feature, "partner")) +
       "</div>"
     );
@@ -1538,6 +1734,7 @@
       state.map.onPopupOpen(onPopupOpened);
     }
     loadTotals();
+    initReturnPrompt();
     if (state.map && state.map.onDragStart) {
       state.map.onDragStart(function () { state.locateRecenter = false; });
     }

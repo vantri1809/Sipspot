@@ -1397,3 +1397,123 @@ a.feedback-osm-link:focus-visible {
 @media (min-width: 641px) {
   .pwa-install { left: auto; right: 1rem; bottom: 1rem; margin-inline: 0; }
 }
+
+/* Directions reminders: short "don't forget" toast + welcome-back prompt */
+.direct-me-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+.sipspot-toast {
+  position: fixed;
+  z-index: 3700;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 0.5rem);
+  width: max-content;
+  max-width: min(92vw, 24rem);
+  padding: 0.6rem 0.95rem;
+  background: var(--primary-deep);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.sipspot-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+.sipspot-toast[hidden] { display: none !important; }
+
+.refill-return {
+  position: fixed;
+  z-index: 3600;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  max-width: 26rem;
+  margin-inline: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.75rem 0.85rem;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--leaf);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(13, 33, 55, 0.22);
+  animation: refill-return-in 0.25s ease-out;
+}
+@keyframes refill-return-in {
+  from { opacity: 0; transform: translateY(0.6rem); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .refill-return { animation: none; }
+  .sipspot-toast { transition: none; }
+}
+.refill-return-icon {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  margin-top: 0.1rem;
+  border-radius: 50%;
+  background: var(--paper) url("../icons/logo.svg") center / 70% no-repeat;
+}
+.refill-return-body { flex: 1; min-width: 0; }
+.refill-return-q {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  font-size: 0.98rem;
+  line-height: 1.3;
+  color: var(--teal-deep);
+  overflow-wrap: anywhere;
+}
+.refill-return-q.is-error { color: var(--danger); }
+.refill-return.is-done .refill-return-q { margin-bottom: 0.35rem; }
+.refill-return-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.refill-return-yes {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  min-height: 44px;
+  background: var(--leaf);
+  box-shadow: 0 3px 0 var(--leaf-dark);
+}
+.refill-return-yes:hover { background: var(--leaf-dark); }
+.refill-return-no {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0.3rem 0.4rem;
+  cursor: pointer;
+}
+.refill-return-no:hover { color: var(--ink); }
+.refill-return button:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+/* One card at a time at the bottom of the screen */
+body.has-refill-return .pwa-install { display: none !important; }
+/* Phones: leave the bottom-right "find me" map button uncovered */
+@media (max-width: 640px) {
+  .refill-return { right: 4.6rem; margin-inline: 0; }
+}
+@media (min-width: 641px) {
+  .refill-return { left: auto; right: 1rem; bottom: 1rem; margin-inline: 0; }
+}
