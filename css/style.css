@@ -1200,7 +1200,7 @@ a.feedback-osm-link:focus-visible {
   font-size: 0.88rem;
   color: var(--muted);
 }
-/* "Not working" reports (amber; never hides a point) */
+/* "Not working" reports (amber). Only urgent reasons on a managed unit hide it. */
 .feedback-actions .feedback-btn { flex: 1 1 6.5rem; }
 .feedback-broken {
   border: 2px solid #fb8c00;
@@ -1604,3 +1604,58 @@ body.has-refill-return .pwa-install { display: none !important; }
 @media (min-width: 641px) {
   .refill-return { left: auto; right: 1rem; bottom: 1rem; margin-inline: 0; }
 }
+
+/* Who looks after a point: community-mapped, managed and checked, or overdue */
+.popup .care-note {
+  margin: 0.45rem 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.popup .care-note.is-managed {
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border-left: 4px solid var(--leaf);
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+.popup .care-note.is-overdue {
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border-left: 4px solid #fb8c00;
+  background: #fff3e0;
+  color: #6b3a00;
+}
+
+/* Staff check-in page (/check/) */
+.check-card {
+  max-width: 28rem;
+  margin: 1.5rem auto;
+  padding: 1.25rem;
+  border-radius: 14px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+}
+.check-card h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+.check-unit { font-weight: 700; font-size: 1.1rem; margin: 0.25rem 0; }
+.check-steps { margin: 0.9rem 0; padding-left: 1.2rem; }
+.check-steps li { margin: 0.3rem 0; }
+.check-actions { display: grid; gap: 0.7rem; margin-top: 1rem; }
+.check-actions .btn { width: 100%; justify-content: center; font-size: 1.05rem; padding: 0.9rem 1rem; }
+.btn-problem {
+  border: 2px solid #c62828;
+  background: #fff;
+  color: #b71c1c;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.check-result {
+  margin-top: 1rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  font-weight: 700;
+}
+.check-result.is-ok { background: #e8f5e9; color: #1b5e20; }
+.check-result.is-problem { background: #ffebee; color: #b71c1c; }
+.check-result.is-error { background: #fff3e0; color: #6b3a00; }
+.check-actions [hidden] { display: none; }

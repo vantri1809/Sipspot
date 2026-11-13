@@ -232,6 +232,18 @@
     "partner_count": 0
   },
   {
+    "slug": "lichfield",
+    "name": "Lichfield",
+    "lat": 52.6816,
+    "lon": -1.8262,
+    "radius_km": 4,
+    "population": 34700,
+    "zoom": 14,
+    "launch_town": true,
+    "osm_count": 0,
+    "partner_count": 0
+  },
+  {
     "slug": "liverpool",
     "name": "Liverpool",
     "lat": 53.4084,

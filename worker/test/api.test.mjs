@@ -154,3 +154,85 @@ test("IPv6 is throttled per /64", async () => {
   assert.equal((await post("/api/report", { id: LONDON, reason: "other" }, net + "::1")).body.ok, true);
   assert.equal((await post("/api/report", { id: LONDON, reason: "other" }, net + ":0:0:0:2")).body.error, "too_soon");
 });
+
+// Managed units and staff check-ins (needs LOCAL_REPORTS_KEY for the admin calls).
+async function admin(path, body) {
+  const res = await fetch(BASE + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + LOCAL_KEY },
+    body: JSON.stringify(body)
+  });
+  return { status: res.status, body: await res.json().catch(() => null) };
+}
+
+test("managed units: register, staff check-in, urgent report hides, check restores", async () => {
+  // Admin is owner-only.
+  const noAuth = await fetch(BASE + "/api/admin/unit", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  assert.equal(noAuth.status, 401);
+  if (!LOCAL_KEY) return;
+  const idx = await import("../generated/points-index.json", { with: { type: "json" } });
+  const UNIT = Object.keys(idx.default.points)[300 + Math.floor(Math.random() * 1000)];
+
+  assert.equal((await admin("/api/admin/unit", { id: UNIT, partner_id: "test-partner" })).body.error, "partner_name_required");
+  assert.equal((await admin("/api/admin/unit", { id: "osm:node:1", partner_id: "test-partner", partner_name: "Test" })).status, 404);
+  const reg = await admin("/api/admin/unit", {
+    id: UNIT, partner_id: "test-partner", partner_name: "Test Centre",
+    alert_email: "alerts@example.com", label: "Unit 1", check_every_hours: 24
+  });
+  assert.equal(reg.status, 200);
+  assert.match(reg.body.check_key, /^[0-9a-f]{32}$/);
+  const key = reg.body.check_key;
+  // Re-registering without rotate_key never reveals the key again.
+  assert.equal((await admin("/api/admin/unit", { id: UNIT, partner_id: "test-partner" })).body.check_key, null);
+
+  // New, never-checked unit counts from registration: ok.
+  assert.equal((await get("/api/units")).body.units[UNIT].status, "ok");
+
+  // Wrong key, wrong origin, bad outcome.
+  assert.equal((await post("/api/check", { id: UNIT, key: "0".repeat(32), outcome: "ok" }, rnd())).status, 403);
+  assert.equal((await post("/api/check", { id: UNIT, key: key, outcome: "ok" }, rnd(), "https://evil.example")).status, 403);
+  assert.equal((await post("/api/check", { id: UNIT, key: key, outcome: "maybe" }, rnd())).status, 400);
+  const info = await post("/api/check-info", { id: UNIT, key: key }, rnd());
+  assert.equal(info.body.unit.label, "Unit 1");
+  assert.equal(info.body.unit.partner, "Test Centre");
+
+  // Staff check-in.
+  const ok = await post("/api/check", { id: UNIT, key: key, outcome: "ok" }, rnd());
+  assert.equal(ok.status, 200);
+  assert.equal(ok.body.unit.status, "ok");
+  assert.ok(ok.body.unit.last_check);
+
+  // An ordinary report does not hide it; an urgent one does.
+  assert.equal((await post("/api/report", { id: UNIT, reason: "broken" }, rnd())).body.unit_hidden, false);
+  assert.equal((await get("/api/units")).body.units[UNIT].status, "ok");
+  const urgent = await post("/api/report", { id: UNIT, reason: "tampered" }, rnd());
+  assert.equal(urgent.body.unit_hidden, true);
+  const hidden = (await get("/api/units")).body.units[UNIT];
+  assert.equal(hidden.status, "hidden");
+  assert.match(hidden.hidden_label, /tampered/);
+  // A second urgent report while hidden changes nothing.
+  assert.equal((await post("/api/report", { id: UNIT, reason: "taste_smell" }, rnd())).body.unit_hidden, false);
+
+  // Staff check clears it and closes the open reports.
+  await new Promise((res) => setTimeout(res, 1100));
+  assert.equal((await post("/api/check", { id: UNIT, key: key, outcome: "ok" }, rnd())).body.unit.status, "ok");
+  assert.deepEqual((await get("/api/point/" + encodeURIComponent(UNIT))).body.reports, []);
+
+  // Staff can take it off themselves.
+  assert.equal((await post("/api/check", { id: UNIT, key: key, outcome: "problem" }, rnd())).body.unit.status, "hidden");
+
+  // Owner can restore, and rotating the key kills the old QR code.
+  assert.equal((await admin("/api/admin/unit-status", { id: UNIT, hidden: false })).body.unit.status, "ok");
+  const rot = await admin("/api/admin/unit", { id: UNIT, partner_id: "test-partner", rotate_key: true });
+  assert.notEqual(rot.body.check_key, key);
+  assert.equal((await post("/api/check", { id: UNIT, key: key, outcome: "ok" }, rnd())).status, 403);
+  assert.equal((await post("/api/check", { id: UNIT, key: rot.body.check_key, outcome: "ok" }, rnd())).status, 200);
+
+  const list = await fetch(BASE + "/api/admin/units", { headers: { Authorization: "Bearer " + LOCAL_KEY } });
+  const lb = await list.json();
+  const mine = lb.units.find((u) => u.id === UNIT);
+  assert.ok(mine.checks_last_30_days >= 3);
+  // The public list never exposes partner contact details or key hashes.
+  assert.equal(JSON.stringify((await get("/api/units")).body).includes("example.com"), false);
+  assert.equal(JSON.stringify((await get("/api/units")).body).includes("hash"), false);
+});

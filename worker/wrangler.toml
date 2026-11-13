@@ -31,3 +31,9 @@ ALLOWED_ORIGINS = "https://sipspot.co.uk,https://www.sipspot.co.uk,https://vantr
 ALLOW_LOCALHOST = "false"
 POINT_COOLDOWN_SECONDS = "7200"
 DAILY_CAP = "40"
+SITE_URL = "https://sipspot.co.uk"
+# Alert emails for managed units ("taken off the map", "check overdue") are
+# sent with Resend (resend.com) once these are set. Until then they are only
+# logged. Set the API key as a secret: npx wrangler secret put RESEND_API_KEY
+# ALERT_FROM = "SipSpot alerts <alerts@sipspot.co.uk>"
+# OWNER_ALERT_EMAIL = "hello@sipspot.co.uk"

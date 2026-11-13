@@ -217,12 +217,15 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
     desc = escape(description)
     title_e = escape(title)
     canon = escape(canonical)
+    # Link previews need an absolute URL. Bump ?v= if the image changes,
+    # because WhatsApp and Facebook cache previews by URL.
+    og_image = escape(cfg["siteUrl"].rstrip("/") + "/icons/og-image.png?v=1")
     map_css = ""
     if include_map:
-        map_css = """
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">"""
+        map_css = f"""
+  <link rel="stylesheet" href="{versioned_href("vendor/leaflet/leaflet.css", depth)}">
+  <link rel="stylesheet" href="{versioned_href("vendor/markercluster/MarkerCluster.css", depth)}">
+  <link rel="stylesheet" href="{versioned_href("vendor/markercluster/MarkerCluster.Default.css", depth)}">"""
     return f"""<!DOCTYPE html>
 <html lang="en-GB">
 <head>
@@ -236,6 +239,12 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
   <meta property="og:url" content="{canon}">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_GB">
+  <meta property="og:site_name" content="{brand}">
+  <meta property="og:image" content="{og_image}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{brand}: Find it. Fill it. Go. Free places to refill your water bottle across the UK.">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#1E88E5">
   <link rel="icon" href="{site_href("favicon.ico", depth)}" type="image/x-icon">
   <link rel="manifest" href="{site_href("manifest.webmanifest", depth)}">
@@ -244,9 +253,7 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
   <meta name="apple-mobile-web-app-title" content="{brand}">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{versioned_href('vendor/fonts/fonts.css', depth)}">
   <link rel="stylesheet" href="{versioned_href('css/style.css', depth)}">{map_css}
   {extra}
 </head>"""
@@ -254,9 +261,9 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
 
 def map_scripts(depth: int = 0) -> str:
     return f"""
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/opening_hours@3.8.0/opening_hours+deps.min.js"></script>
+  <script src="{versioned_href("vendor/leaflet/leaflet.js", depth)}"></script>
+  <script src="{versioned_href("vendor/markercluster/leaflet.markercluster.js", depth)}"></script>
+  <script src="{versioned_href("vendor/opening_hours/opening_hours+deps.min.js", depth)}"></script>
   <script src="{versioned_href("js/config.js", depth)}"></script>
   <script src="{versioned_href("js/map-provider.js", depth)}"></script>
   <script src="{versioned_href("js/app.js", depth)}"></script>
@@ -328,7 +335,9 @@ def city_grid(cities, heading="Browse by city", depth: int = 0) -> str:
     for c in cities:
         osm_n = c["osm_count"]
         label = f"{osm_n} OSM point" + ("" if osm_n == 1 else "s")
-        if c.get("partner_count"):
+        if c.get("launch_town") and not osm_n and not c.get("partner_count"):
+            label = "New: list your venue"
+        elif c.get("partner_count"):
             label += f", {c['partner_count']} partner" + ("" if c["partner_count"] == 1 else "s")
         items.append(
             f'<a href="{site_href(c["slug"] + "/", depth)}"><strong>{escape(c["name"])}</strong><span>{escape(label)}</span></a>'
@@ -411,7 +420,7 @@ def faq_jsonld(city_name: str, osm_count: int) -> str:
         ),
         (
             "How often is the map updated?",
-            "OpenStreetMap points are refreshed weekly from the Overpass API. Each popup shows the date the point was last edited on OpenStreetMap. Partner listings show the date they were last verified.",
+            "OpenStreetMap points are refreshed regularly from the OpenStreetMap database. Each popup shows the date the point was last edited on OpenStreetMap. Partner listings show the date they were last verified.",
         ),
         (
             "What if a point is wrong?",
@@ -631,7 +640,21 @@ def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
         n = city["partner_count"]
         partner_note = f" There {'is' if n == 1 else 'are'} also {n} partner refill point{'s' if n != 1 else ''} in this area, listed by the venue{'s' if n != 1 else ''} and shown separately."
     intros = city_intro_paragraphs(city, all_cities or [])
-    if intros:
+    is_empty = not city["osm_count"] and not city.get("partner_count")
+    if is_empty:
+        desc = (
+            f"{cfg.get('tagline') or 'Find it. Fill it. Go.'} "
+            f"Free water refill points in {name}. Run a café, shop, gym or pub? List your free tap."
+        )
+        list_href = site_href("list-your-business/", depth)
+        intro_html = (
+            f'<p class="lede">SipSpot is starting in {escape(name)}, and the map here is just getting going.</p>'
+            f"<p>Run a café, shop, gym or pub in {escape(name)}? "
+            f'<a href="{list_href}">List your free tap or water cooler</a>. It costs nothing, '
+            "and you get a window sticker so people know they can come in.</p>"
+            f'<p>Until then, the <a href="{site_href("", depth)}">UK map</a> shows the nearest points outside the area.</p>'
+        )
+    elif intros:
         first, *rest = intros
         intro_html = f'<p class="lede">{escape(first)}</p>' + "".join(f"<p>{escape(p)}</p>" for p in rest)
         if partner_note:
@@ -743,13 +766,14 @@ def page_privacy(cfg) -> str:
       <p>If you use the “List your venue” form, it opens your own email app with the details you typed and addresses the message to {email}. We only see that information if you send the email. Please do not include a password or payment details. We will use what you send only to follow up about a listing.</p>
       <p>We do not set cookies. Taps on “I filled up here”, “Still here” and “Gone” are counted anonymously against that map point, so we can show totals such as “12 refills logged by SipSpot users”. We do not ask who you are. To stop spam, our counter briefly uses your IP address in hashed (scrambled) form to limit repeat taps. The IP address itself is not stored, and the hashed key is deleted within about a day. Your browser also keeps a note of your taps in local storage (not a cookie), so the same point does not ask again on this device.</p>
       <p>If you tap “Not working” and choose a reason, we store only which map point it is, the reason you picked and the time. The report is anonymous: we do not store your IP address or anything that identifies you, and the same short-lived hashed key described above is used to stop repeat reports. Reports are shown on the map for up to 7 days, may be passed on to whoever looks after that refill point so it can be fixed, and are deleted after a year.</p>
+      <p>Some refill units are looked after by the venue or organisation that owns them. Their staff check the unit by scanning a QR code on it. For each check we store only which unit it was, whether staff found it fine or found a problem, and the time. We keep this record for two years so the owner can show the unit was looked after. We hold the owner’s business name and an email address for alerts about their units. None of this involves visitors’ information.</p>
       <p>If you dismiss the “Install app” tip, that choice is also stored in your browser’s local storage, so we do not show it again on this device.</p>
       <p>When you tap Directions, your browser notes which point you were heading to in local storage for up to 4 hours, so SipSpot can ask “Did you fill up?” when you come back. This reminder stays on your device and nothing is sent to us unless you tap “Yes, log it”.</p>
       <h2>Location</h2>
       <p>If you tap “Find water near me”, your browser may share your location with this page so the map can centre on you and estimate a walking distance. That location stays in your browser. It is not sent to us.</p>
       <h2>Map tiles, directions and other services</h2>
       <p>The map background tiles are loaded from CARTO (basemaps.cartocdn.com). CARTO sees your IP address, as any website host would.</p>
-      <p>The site also loads fonts from Google Fonts (fonts.googleapis.com and fonts.gstatic.com) and map scripts from unpkg.com and cdn.jsdelivr.net. Those providers may also see your IP address.</p>
+      <p>Fonts and map scripts are served from this site, not from third-party services.</p>
       <p>The Directions buttons open Google Maps or Apple Maps, which have their own privacy policies. We do not receive the route you follow.</p>
       <h2>Hosting</h2>
       <p>The site is hosted on GitHub Pages. The sipspot.co.uk domain is set up with Cloudflare DNS. The tap counter runs on Cloudflare Workers.</p>
@@ -763,6 +787,45 @@ def page_privacy(cfg) -> str:
   {footer(cfg, depth)}
   <script src="{versioned_href("js/config.js", depth)}"></script>
   <script src="{versioned_href("js/pwa.js", depth)}"></script>
+</body>
+</html>"""
+
+
+def page_check(cfg) -> str:
+    """Staff check-in page. Opened from the QR code on a managed unit; the unit id
+    and check key travel in the URL fragment, which browsers never send to a server."""
+    brand = cfg["brand"]
+    url = cfg["siteUrl"].rstrip("/") + "/check/"
+    depth = 1
+    extra = '<meta name="robots" content="noindex, nofollow">\n  <meta name="referrer" content="no-referrer">'
+    return f"""{head(cfg, f"Staff check — {brand}", "Staff check-in for a SipSpot refill unit.", url, extra=extra, depth=depth)}
+<body class="check-page">
+  {header(cfg, "", depth)}
+  <main class="page-body">
+    <div class="wrap">
+      <section class="check-card" aria-labelledby="check-title">
+        <h1 id="check-title">Staff check</h1>
+        <p class="check-unit" id="check-unit">Loading…</p>
+        <p class="results-meta" id="check-meta"></p>
+        <div id="check-body" hidden>
+          <ol class="check-steps">
+            <li>Look for damage, anything stuck in or on the spout, or signs that someone has tampered with it.</li>
+            <li>Wipe the spout and the area around it.</li>
+            <li>Run the water for a few seconds.</li>
+          </ol>
+          <div class="check-actions">
+            <button type="button" class="btn btn-primary" id="check-ok">Checked, all fine</button>
+            <button type="button" class="btn btn-problem" id="check-problem">Problem: take it off the map</button>
+            <button type="button" class="btn btn-problem" id="check-problem-confirm" hidden>Yes, take it off the map now</button>
+          </div>
+        </div>
+        <p class="check-result" id="check-result" role="status" hidden></p>
+      </section>
+    </div>
+  </main>
+  {footer(cfg, depth)}
+  <script src="{versioned_href("js/config.js", depth)}"></script>
+  <script src="{versioned_href("js/check.js", depth)}"></script>
 </body>
 </html>"""
 
@@ -782,6 +845,7 @@ def page_terms(cfg) -> str:
       <p>{escape(brand)} is an information service run by J Skelton, a sole trader in the United Kingdom. It helps you find drinking-water and bottle-fill points that have been mapped as free to use. If you have a question, email <a href="mailto:{email}">{email}</a>.</p>
       <p>The map is a starting point, not a guarantee. Always check a refill point yourself before you rely on it. A tap may be out of order, closed, or no longer there.</p>
       <p>Points come mainly from OpenStreetMap, which is updated by volunteers, and may also include partner refill points that venues list themselves, which we keep separately. Hours, access and water type can be wrong or out of date. We do not inspect every point, and we give no warranty that a point will be available, safe or suitable.</p>
+      <p>Some units show when they were last checked by staff. Those checks are made by the venue or organisation that owns the unit, not by {escape(brand)}. A recent check means a member of their staff looked at and wiped the unit. It is not a test of the water. Units reported as looking tampered with, or as tasting or smelling odd, are taken off the map until their staff have checked them.</p>
       <p>Public fountain, tap and café fill-point data is © OpenStreetMap contributors and licensed under the Open Database Licence (ODbL 1.0). See <a href="https://www.openstreetmap.org/copyright">openstreetmap.org/copyright</a>.</p>
     </div>
   </main>
@@ -901,7 +965,11 @@ def choose_cities(places, osm_features, partner_features):
     by_pop = sorted(ranked, key=lambda c: c.get("population") or 0, reverse=True)
     top30 = by_pop[:30]
     chosen_slugs = {c["slug"] for c in top30}
-    extras = [c for c in ranked if c["slug"] not in chosen_slugs and c["osm_count"] >= 10]
+    # always_include: launch towns get a page even before they have any points.
+    extras = [
+        c for c in ranked
+        if c["slug"] not in chosen_slugs and (c["osm_count"] >= 10 or c.get("always_include"))
+    ]
     extras.sort(key=lambda c: (-c["osm_count"], c["name"]))
     chosen = top30 + extras
     chosen.sort(key=lambda c: c["name"])
@@ -969,13 +1037,17 @@ def main() -> int:
 
     cities = choose_cities(places, osm, partners)
     cities, redirects = apply_city_merges(cities)
-    public_cities = [{k: v for k, v in c.items() if not k.startswith("_")} for c in cities]
+    public_cities = [
+        {k: v for k, v in c.items() if not k.startswith("_") and k != "always_include"}
+        for c in cities
+    ]
     write(ROOT / "data" / "cities.json", json.dumps(public_cities, ensure_ascii=False, indent=2))
 
     write(ROOT / "index.html", page_index(cfg, public_cities))
     write(ROOT / "cities" / "index.html", page_cities(cfg, public_cities))
     write(ROOT / "privacy" / "index.html", page_privacy(cfg))
     write(ROOT / "terms" / "index.html", page_terms(cfg))
+    write(ROOT / "check" / "index.html", page_check(cfg))
     write(ROOT / "list-your-business" / "index.html", page_list_business(cfg))
 
     by_slug = {c["slug"]: c for c in cities}

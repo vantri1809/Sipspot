@@ -122,6 +122,9 @@ def classify(tags: dict) -> str:
     return "public_fountain"
 
 
+WATER_POINT_KIND = "Water point for boats and caravans"
+
+
 def kind_label(tags: dict, category: str) -> str:
     if category == "cafe_refill":
         amenity = tags.get("amenity") or tags.get("shop") or tags.get("tourism")
@@ -131,7 +134,9 @@ def kind_label(tags: dict, category: str) -> str:
     amenity = tags.get("amenity", "")
     man_made = tags.get("man_made", "")
     if amenity == "water_point":
-        return "Water point"
+        # amenity=water_point is a tap for filling boat or caravan tanks
+        # (mostly Canal & River Trust), not a drinking fountain.
+        return WATER_POINT_KIND
     if man_made == "water_tap":
         return "Water tap"
     if amenity == "drinking_water":
