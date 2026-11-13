@@ -217,6 +217,9 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
     desc = escape(description)
     title_e = escape(title)
     canon = escape(canonical)
+    # Link previews need an absolute URL. Bump ?v= if the image changes,
+    # because WhatsApp and Facebook cache previews by URL.
+    og_image = escape(cfg["siteUrl"].rstrip("/") + "/icons/og-image.png?v=1")
     map_css = ""
     if include_map:
         map_css = f"""
@@ -236,6 +239,12 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
   <meta property="og:url" content="{canon}">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_GB">
+  <meta property="og:site_name" content="{brand}">
+  <meta property="og:image" content="{og_image}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{brand}: Find it. Fill it. Go. Free places to refill your water bottle across the UK.">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#1E88E5">
   <link rel="icon" href="{site_href("favicon.ico", depth)}" type="image/x-icon">
   <link rel="manifest" href="{site_href("manifest.webmanifest", depth)}">

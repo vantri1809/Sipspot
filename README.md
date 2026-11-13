@@ -121,6 +121,14 @@ The weekly OSM workflow does **not** commit `data/partners.geojson`.
 
 `scripts/generate_pages.py` builds a page for each of the 30 most populous places in `scripts/uk_places.json`, plus any other place in that gazetteer with 10 or more OSM points. Pages live at `/london/`, `/manchester/` and so on, with the title “Free water refill points in &lt;City&gt;”, a count, a list, an embedded map, FAQ JSON-LD, and an optional “Sponsored by …” slot when partners are present in that city.
 
+## City pages and launch towns
+
+City pages come from `scripts/uk_places.json`. The 30 largest places always get a page, other places need 10+ OSM points, and any place with `"always_include": true` gets a page regardless (used for launch towns such as Lichfield, which starts with no points). After adding a place, run `python3 scripts/generate_pages.py`, then redeploy the Worker (`cd worker && npx wrangler deploy`) so its city list includes the new page.
+
+## Third-party code and fonts
+
+Leaflet, Leaflet.markercluster, opening_hours.js and the Fraunces / Source Sans 3 fonts are served from `vendor/`, not from a CDN, so the site does not depend on unpkg, jsdelivr or Google Fonts. Licences are kept next to each library. Map tiles still come from CARTO.
+
 ## Map providers
 
 The default map is **Leaflet** with the [CARTO Voyager](https://carto.com/basemaps) vector style, loaded through MapLibre GL Leaflet. All pin, filter, cluster and partner-layer code talks to a small adapter in `js/map-provider.js`. Attribution on the map is “© OpenStreetMap contributors, © CARTO”, with both names linked.

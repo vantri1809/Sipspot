@@ -1,6 +1,6 @@
 /* SipSpot service worker. CACHE_VERSION is kept in sync with the
  * site's ?v= stamp by scripts/generate_pages.py. */
-const CACHE_VERSION = "580096b";
+const CACHE_VERSION = "4894263";
 const SHELL_CACHE = "sipspot-shell-" + CACHE_VERSION;
 const DATA_CACHE = "sipspot-data-" + CACHE_VERSION;
 const CDN_CACHE = "sipspot-cdn-" + CACHE_VERSION;
