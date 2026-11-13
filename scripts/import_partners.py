@@ -10,7 +10,12 @@ Expected columns (header row):
 The partner (supplier / sponsor) column is accepted but never written to the
 public GeoJSON: listings show the venue only, never a supplier or cooler company.
 Optional columns:
-  logo_url, refill_offered, id, is_example, water_type, chilled, walk_in_free
+  logo_url, refill_offered, id, is_example, water_type, chilled, walk_in_free,
+  sponsored_by
+sponsored_by is the one exception to "never name a company": a paid sponsor
+that has agreed in writing to be credited (for example a water company). It is
+published as "Free refills here sponsored by <name>". It must be its own
+column: the old "sponsor" header still means the private supplier column.
 walk_in_free must be yes — SipSpot only lists free walk-in fills.
 water_type values: tap, filtered, chilled filtered, unknown
 chilled values: yes, no
@@ -76,6 +81,7 @@ HEADER_MAP = {
     "chilled": "chilled",
     "walkinfree": "walk_in_free",
     "walkinfreetag": "walk_in_free",
+    "sponsoredby": "sponsored_by",
 }
 
 
@@ -224,6 +230,9 @@ def main() -> int:
             "chilled": chilled,
             "walk_in_free": True,
         }
+        sponsored_by = (row.get("sponsored_by") or "").strip()[:80]
+        if sponsored_by:
+            props["sponsored_by"] = sponsored_by
         features.append({
             "type": "Feature",
             "id": fid,

@@ -129,6 +129,12 @@ City pages come from `scripts/uk_places.json`. The 30 largest places always get 
 
 Units a partner buys or lists through SipSpot can be *managed*: the partner's own staff check them daily by scanning a QR sticker, and the map shows "Checked by staff today at 09:40". Overdue or reported units are flagged or taken off the map automatically and the partner is emailed. Points from OpenStreetMap say "Mapped by the community. SipSpot doesn't check this point". Set-up and API details: `worker/README.md`; stickers: `python3 scripts/units.py`.
 
+## Sponsors and window stickers
+
+A partner listing can credit a paid sponsor with a `sponsored_by` column in the partners CSV (`scripts/import_partners.py`). The popup then says "Free refills here sponsored by <name>". This is separate from the private `partner` / `sponsor` supplier column, which is never published. Only add a sponsor once they have agreed in writing.
+
+`python3 scripts/window_sticker.py --venue "..." --city lichfield [--sponsor "..." --sponsor-logo logo.svg]` makes a 100 x 140 mm print-ready window or unit sticker with a QR code to the city page.
+
 ## Third-party code and fonts
 
 Leaflet, Leaflet.markercluster, opening_hours.js and the Fraunces / Source Sans 3 fonts are served from `vendor/`, not from a CDN, so the site does not depend on unpkg, jsdelivr or Google Fonts. Licences are kept next to each library. Map tiles still come from CARTO.

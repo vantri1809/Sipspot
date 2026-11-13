@@ -1659,3 +1659,11 @@ body.has-refill-return .pwa-install { display: none !important; }
 .check-result.is-problem { background: #ffebee; color: #b71c1c; }
 .check-result.is-error { background: #fff3e0; color: #6b3a00; }
 .check-actions [hidden] { display: none; }
+
+/* Sponsor credit on partner popups (a paid sponsor, never a supplier) */
+.popup .sponsor-note {
+  margin: 0.35rem 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.popup .sponsor-note strong { color: var(--ink); }

@@ -1617,6 +1617,9 @@
         (p.address ? "<p>" + escapeHtml(p.address) + "</p>" : "") +
         logo +
         '<p class="partner-note">Listed by the venue</p>' +
+        (p.sponsored_by
+          ? '<p class="sponsor-note">Free refills here sponsored by <strong>' + escapeHtml(String(p.sponsored_by).slice(0, 80)) + "</strong></p>"
+          : "") +
         (p.is_example ? "" : careBlock(feature, "partner")) +
         "<p>" + escapeHtml(verified) + "</p>" +
         (p.is_example ? "" : reportStatusBlock(feature, "partner")) +
