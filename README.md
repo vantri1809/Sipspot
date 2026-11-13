@@ -125,6 +125,10 @@ The weekly OSM workflow does **not** commit `data/partners.geojson`.
 
 City pages come from `scripts/uk_places.json`. The 30 largest places always get a page, other places need 10+ OSM points, and any place with `"always_include": true` gets a page regardless (used for launch towns such as Lichfield, which starts with no points). After adding a place, run `python3 scripts/generate_pages.py`, then redeploy the Worker (`cd worker && npx wrangler deploy`) so its city list includes the new page.
 
+## Managed units
+
+Units a partner buys or lists through SipSpot can be *managed*: the partner's own staff check them daily by scanning a QR sticker, and the map shows "Checked by staff today at 09:40". Overdue or reported units are flagged or taken off the map automatically and the partner is emailed. Points from OpenStreetMap say "Mapped by the community. SipSpot doesn't check this point". Set-up and API details: `worker/README.md`; stickers: `python3 scripts/units.py`.
+
 ## Third-party code and fonts
 
 Leaflet, Leaflet.markercluster, opening_hours.js and the Fraunces / Source Sans 3 fonts are served from `vendor/`, not from a CDN, so the site does not depend on unpkg, jsdelivr or Google Fonts. Licences are kept next to each library. Map tiles still come from CARTO.
