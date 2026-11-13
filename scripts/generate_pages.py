@@ -219,10 +219,10 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
     canon = escape(canonical)
     map_css = ""
     if include_map:
-        map_css = """
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">"""
+        map_css = f"""
+  <link rel="stylesheet" href="{versioned_href("vendor/leaflet/leaflet.css", depth)}">
+  <link rel="stylesheet" href="{versioned_href("vendor/markercluster/MarkerCluster.css", depth)}">
+  <link rel="stylesheet" href="{versioned_href("vendor/markercluster/MarkerCluster.Default.css", depth)}">"""
     return f"""<!DOCTYPE html>
 <html lang="en-GB">
 <head>
@@ -244,9 +244,7 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
   <meta name="apple-mobile-web-app-title" content="{brand}">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{versioned_href('vendor/fonts/fonts.css', depth)}">
   <link rel="stylesheet" href="{versioned_href('css/style.css', depth)}">{map_css}
   {extra}
 </head>"""
@@ -254,9 +252,9 @@ def head(cfg, title: str, description: str, canonical: str, extra: str = "", inc
 
 def map_scripts(depth: int = 0) -> str:
     return f"""
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/opening_hours@3.8.0/opening_hours+deps.min.js"></script>
+  <script src="{versioned_href("vendor/leaflet/leaflet.js", depth)}"></script>
+  <script src="{versioned_href("vendor/markercluster/leaflet.markercluster.js", depth)}"></script>
+  <script src="{versioned_href("vendor/opening_hours/opening_hours+deps.min.js", depth)}"></script>
   <script src="{versioned_href("js/config.js", depth)}"></script>
   <script src="{versioned_href("js/map-provider.js", depth)}"></script>
   <script src="{versioned_href("js/app.js", depth)}"></script>
@@ -765,7 +763,7 @@ def page_privacy(cfg) -> str:
       <p>If you tap “Find water near me”, your browser may share your location with this page so the map can centre on you and estimate a walking distance. That location stays in your browser. It is not sent to us.</p>
       <h2>Map tiles, directions and other services</h2>
       <p>The map background tiles are loaded from CARTO (basemaps.cartocdn.com). CARTO sees your IP address, as any website host would.</p>
-      <p>The site also loads fonts from Google Fonts (fonts.googleapis.com and fonts.gstatic.com) and map scripts from unpkg.com and cdn.jsdelivr.net. Those providers may also see your IP address.</p>
+      <p>Fonts and map scripts are served from this site, not from third-party services.</p>
       <p>The Directions buttons open Google Maps or Apple Maps, which have their own privacy policies. We do not receive the route you follow.</p>
       <h2>Hosting</h2>
       <p>The site is hosted on GitHub Pages. The sipspot.co.uk domain is set up with Cloudflare DNS. The tap counter runs on Cloudflare Workers.</p>

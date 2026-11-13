@@ -1,6 +1,6 @@
 /* SipSpot service worker. CACHE_VERSION is kept in sync with the
  * site's ?v= stamp by scripts/generate_pages.py. */
-const CACHE_VERSION = "fcaffd8";
+const CACHE_VERSION = "580096b";
 const SHELL_CACHE = "sipspot-shell-" + CACHE_VERSION;
 const DATA_CACHE = "sipspot-data-" + CACHE_VERSION;
 const CDN_CACHE = "sipspot-cdn-" + CACHE_VERSION;
@@ -18,6 +18,13 @@ const SHELL = [
   "./js/map-provider.js?v=" + CACHE_VERSION,
   "./js/form.js?v=" + CACHE_VERSION,
   "./js/pwa.js?v=" + CACHE_VERSION,
+  "./vendor/fonts/fonts.css?v=" + CACHE_VERSION,
+  "./vendor/leaflet/leaflet.css?v=" + CACHE_VERSION,
+  "./vendor/leaflet/leaflet.js?v=" + CACHE_VERSION,
+  "./vendor/markercluster/MarkerCluster.css?v=" + CACHE_VERSION,
+  "./vendor/markercluster/MarkerCluster.Default.css?v=" + CACHE_VERSION,
+  "./vendor/markercluster/leaflet.markercluster.js?v=" + CACHE_VERSION,
+  "./vendor/opening_hours/opening_hours+deps.min.js?v=" + CACHE_VERSION,
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-512-maskable.png",
