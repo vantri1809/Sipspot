@@ -766,6 +766,7 @@ def page_privacy(cfg) -> str:
       <p>If you use the “List your venue” form, it opens your own email app with the details you typed and addresses the message to {email}. We only see that information if you send the email. Please do not include a password or payment details. We will use what you send only to follow up about a listing.</p>
       <p>We do not set cookies. Taps on “I filled up here”, “Still here” and “Gone” are counted anonymously against that map point, so we can show totals such as “12 refills logged by SipSpot users”. We do not ask who you are. To stop spam, our counter briefly uses your IP address in hashed (scrambled) form to limit repeat taps. The IP address itself is not stored, and the hashed key is deleted within about a day. Your browser also keeps a note of your taps in local storage (not a cookie), so the same point does not ask again on this device.</p>
       <p>If you tap “Not working” and choose a reason, we store only which map point it is, the reason you picked and the time. The report is anonymous: we do not store your IP address or anything that identifies you, and the same short-lived hashed key described above is used to stop repeat reports. Reports are shown on the map for up to 7 days, may be passed on to whoever looks after that refill point so it can be fixed, and are deleted after a year.</p>
+      <p>Some refill units are looked after by the venue or organisation that owns them. Their staff check the unit by scanning a QR code on it. For each check we store only which unit it was, whether staff found it fine or found a problem, and the time. We keep this record for two years so the owner can show the unit was looked after. We hold the owner’s business name and an email address for alerts about their units. None of this involves visitors’ information.</p>
       <p>If you dismiss the “Install app” tip, that choice is also stored in your browser’s local storage, so we do not show it again on this device.</p>
       <p>When you tap Directions, your browser notes which point you were heading to in local storage for up to 4 hours, so SipSpot can ask “Did you fill up?” when you come back. This reminder stays on your device and nothing is sent to us unless you tap “Yes, log it”.</p>
       <h2>Location</h2>
@@ -790,6 +791,45 @@ def page_privacy(cfg) -> str:
 </html>"""
 
 
+def page_check(cfg) -> str:
+    """Staff check-in page. Opened from the QR code on a managed unit; the unit id
+    and check key travel in the URL fragment, which browsers never send to a server."""
+    brand = cfg["brand"]
+    url = cfg["siteUrl"].rstrip("/") + "/check/"
+    depth = 1
+    extra = '<meta name="robots" content="noindex, nofollow">\n  <meta name="referrer" content="no-referrer">'
+    return f"""{head(cfg, f"Staff check — {brand}", "Staff check-in for a SipSpot refill unit.", url, extra=extra, depth=depth)}
+<body class="check-page">
+  {header(cfg, "", depth)}
+  <main class="page-body">
+    <div class="wrap">
+      <section class="check-card" aria-labelledby="check-title">
+        <h1 id="check-title">Staff check</h1>
+        <p class="check-unit" id="check-unit">Loading…</p>
+        <p class="results-meta" id="check-meta"></p>
+        <div id="check-body" hidden>
+          <ol class="check-steps">
+            <li>Look for damage, anything stuck in or on the spout, or signs that someone has tampered with it.</li>
+            <li>Wipe the spout and the area around it.</li>
+            <li>Run the water for a few seconds.</li>
+          </ol>
+          <div class="check-actions">
+            <button type="button" class="btn btn-primary" id="check-ok">Checked, all fine</button>
+            <button type="button" class="btn btn-problem" id="check-problem">Problem: take it off the map</button>
+            <button type="button" class="btn btn-problem" id="check-problem-confirm" hidden>Yes, take it off the map now</button>
+          </div>
+        </div>
+        <p class="check-result" id="check-result" role="status" hidden></p>
+      </section>
+    </div>
+  </main>
+  {footer(cfg, depth)}
+  <script src="{versioned_href("js/config.js", depth)}"></script>
+  <script src="{versioned_href("js/check.js", depth)}"></script>
+</body>
+</html>"""
+
+
 def page_terms(cfg) -> str:
     brand = cfg["brand"]
     desc = f"Terms of use for {brand}."
@@ -805,6 +845,7 @@ def page_terms(cfg) -> str:
       <p>{escape(brand)} is an information service run by J Skelton, a sole trader in the United Kingdom. It helps you find drinking-water and bottle-fill points that have been mapped as free to use. If you have a question, email <a href="mailto:{email}">{email}</a>.</p>
       <p>The map is a starting point, not a guarantee. Always check a refill point yourself before you rely on it. A tap may be out of order, closed, or no longer there.</p>
       <p>Points come mainly from OpenStreetMap, which is updated by volunteers, and may also include partner refill points that venues list themselves, which we keep separately. Hours, access and water type can be wrong or out of date. We do not inspect every point, and we give no warranty that a point will be available, safe or suitable.</p>
+      <p>Some units show when they were last checked by staff. Those checks are made by the venue or organisation that owns the unit, not by {escape(brand)}. A recent check means a member of their staff looked at and wiped the unit. It is not a test of the water. Units reported as looking tampered with, or as tasting or smelling odd, are taken off the map until their staff have checked them.</p>
       <p>Public fountain, tap and café fill-point data is © OpenStreetMap contributors and licensed under the Open Database Licence (ODbL 1.0). See <a href="https://www.openstreetmap.org/copyright">openstreetmap.org/copyright</a>.</p>
     </div>
   </main>
@@ -1006,6 +1047,7 @@ def main() -> int:
     write(ROOT / "cities" / "index.html", page_cities(cfg, public_cities))
     write(ROOT / "privacy" / "index.html", page_privacy(cfg))
     write(ROOT / "terms" / "index.html", page_terms(cfg))
+    write(ROOT / "check" / "index.html", page_check(cfg))
     write(ROOT / "list-your-business" / "index.html", page_list_business(cfg))
 
     by_slug = {c["slug"]: c for c in cities}

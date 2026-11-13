@@ -307,7 +307,7 @@
   const API_TIMEOUT_MS = 6000;
   const POINT_CACHE_MS = 30 * 1000;
   const API_ID_RE = /^(?:osm:(?:node|way|relation):\d{1,12}|partner:[A-Za-z0-9][A-Za-z0-9._-]{0,99})$/;
-  const apiState = { points: {}, uk: null, city: null, reachable: null, openReports: {} };
+  const apiState = { points: {}, uk: null, city: null, reachable: null, openReports: {}, units: {} };
 
   function apiBase() {
     return String(cfg.apiBase || "").trim().replace(/\/+$/, "");
@@ -582,6 +582,8 @@
     ["broken", "Broken"],
     ["dirty", "Dirty/unhygienic"],
     ["locked", "Locked/closed"],
+    ["tampered", "Looks tampered with"],
+    ["taste_smell", "Tastes or smells odd"],
     ["other", "Other"]
   ];
   let reportFormSeq = 0;
@@ -763,6 +765,13 @@
       if (r.ok && r.body && r.body.ok === true) {
         saveReportLog(id);
         if (r.body.point) rememberPoint(r.body.point);
+        if (r.body.unit_hidden) {
+          const u = apiState.units[id] || {};
+          apiState.units[id] = Object.assign({}, u, { status: "hidden" });
+          markReported(box, "Thank you. We’ve taken this unit off the map and told the venue so their staff can check it.");
+          setTimeout(refresh, 2500);
+          return;
+        }
         markReported(box, "Thanks for letting us know. We’ve logged it as: " + reportLabel(reason) + ".");
         paintPoint(id);
         updateListMarkers();
@@ -824,6 +833,67 @@
       updateListMarkers();
       $all(".report-status").forEach(renderReportStatus);
     }).catch(function () { /* no markers if the API cannot be reached */ });
+  }
+
+  /* Managed units: partner-owned units checked by their own staff via a QR
+   * code. Hidden units drop off the map; others show when they were checked. */
+  function loadUnits() {
+    if (!apiEnabled()) return;
+    apiRequest("/api/units").then(function (r) {
+      if (!r.ok || !r.body || r.body.ok !== true || !r.body.units) return;
+      const next = {};
+      Object.keys(r.body.units).forEach(function (id) {
+        const u = r.body.units[id];
+        if (API_ID_RE.test(id) && u && /^(ok|overdue|hidden)$/.test(u.status)) {
+          next[id] = {
+            status: u.status,
+            last_check: u.last_check ? String(u.last_check) : null,
+            every_hours: Number(u.every_hours) || 24
+          };
+        }
+      });
+      apiState.units = next;
+      if (state.osmFeatures.length || state.partnerFeatures.length) refresh();
+    }).catch(function () { /* without the API, units show as ordinary points */ });
+  }
+
+  function unitFor(id) {
+    return id ? apiState.units[id] || null : null;
+  }
+
+  function unitHidden(feature, source) {
+    const u = unitFor(apiPointId(feature, source));
+    return !!(u && u.status === "hidden");
+  }
+
+  function checkedLabel(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const today = new Date();
+    const yest = new Date(today.getTime() - 86400000);
+    if (d.toDateString() === today.toDateString()) return "today at " + time;
+    if (d.toDateString() === yest.toDateString()) return "yesterday at " + time;
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "long" }) + " at " + time;
+  }
+
+  /* Popup line saying who looks after this point. */
+  function careBlock(feature, source) {
+    const u = unitFor(apiPointId(feature, source));
+    if (u && u.status === "ok") {
+      const when = u.last_check ? checkedLabel(u.last_check) : "";
+      const h = u.every_hours || 24;
+      const every = h === 24 ? "every day" : (h % 24 === 0 ? "every " + (h / 24) + " days" : (h === 1 ? "every hour" : "every " + h + " hours"));
+      return '<p class="care-note is-managed"><strong>Checked by staff' + (when ? " " + escapeHtml(when) : "") +
+        ".</strong> Staff here check this unit " + every + ".</p>";
+    }
+    if (u && u.status === "overdue") {
+      return '<p class="care-note is-overdue"><strong>Not checked recently.</strong> Make sure it looks clean before you drink.</p>';
+    }
+    if (source === "osm") {
+      return '<p class="care-note">Mapped by the community. SipSpot doesn’t check this point, so make sure it looks clean before you drink.</p>';
+    }
+    return "";
   }
 
   function submitRefill(box) {
@@ -1499,6 +1569,7 @@
         (p.amenity === "water_point"
           ? '<p class="popup-note">Mainly for filling boat or caravan tanks, so expect a plain tap, sometimes with a hose, rather than a drinking fountain.</p>'
           : "") +
+        careBlock(feature, "osm") +
         hoursBlock(p) +
         "<p>" + escapeHtml(accessLabel(p.access)) + "</p>" +
         (bottle ? "<p>" + escapeHtml(bottle) + "</p>" : "") +
@@ -1546,6 +1617,7 @@
         (p.address ? "<p>" + escapeHtml(p.address) + "</p>" : "") +
         logo +
         '<p class="partner-note">Listed by the venue</p>' +
+        (p.is_example ? "" : careBlock(feature, "partner")) +
         "<p>" + escapeHtml(verified) + "</p>" +
         (p.is_example ? "" : reportStatusBlock(feature, "partner")) +
         directionsBlock(lat, lon, p.is_example ? null : tripInfo(feature, "partner", p.name || "Refill point")) +
@@ -1560,6 +1632,7 @@
       const ll = featureLatLon(f);
       if (!ll) return false;
       if (!pointInCity(ll.lat, ll.lon, state.city)) return false;
+      if (unitHidden(f, "osm")) return false;
       return osmPassesFilters(f.properties);
     });
   }
@@ -1569,6 +1642,7 @@
       const ll = featureLatLon(f);
       if (!ll) return false;
       if (!pointInCity(ll.lat, ll.lon, state.city)) return false;
+      if (unitHidden(f, "partner")) return false;
       return partnerPassesFilters(f.properties);
     });
   }
@@ -2037,6 +2111,7 @@
     }
     loadTotals();
     loadOpenReports();
+    loadUnits();
     initReturnPrompt();
     if (state.map && state.map.onDragStart) {
       state.map.onDragStart(function () { state.locateRecenter = false; });

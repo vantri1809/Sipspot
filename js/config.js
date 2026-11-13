@@ -55,7 +55,7 @@ window.REFILLMAP_CONFIG = window.SIPSPOT_CONFIG;
     var base = cfg.basePath || '/';
     return base.replace(/\/+$/, '') + '/' + String(path).replace(/^\/+/, '');
   }
-  var assetVersion = "4894263";
+  var assetVersion = "b465456";
   function withVersion(url) {
     if (!url) return url;
     if (/^(https?:)?\/\//i.test(url) && url.indexOf(location.origin) !== 0) return url;
