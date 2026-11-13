@@ -1248,7 +1248,10 @@
     const now = new Date();
     if (typeof opening_hours === "function") {
       try {
-        const oh = new opening_hours(raw, { address: { country_code: "gb" } });
+        // opening_hours.js only knows UK bank holidays by nation, and only has
+        // England (and Wales). Without a state, any hours with "PH" fail to
+        // parse, so use England's holidays as the closest UK-wide answer.
+        const oh = new opening_hours(raw, { address: { country_code: "gb", state: "England" } });
         return { parsed: true, open: !!oh.getState(now) };
       } catch (err) {
         /* fall through to the simple parser */
