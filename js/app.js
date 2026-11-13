@@ -1493,6 +1493,9 @@
       '<div class="popup">' +
         "<h3>" + escapeHtml(name) + "</h3>" +
         "<p>" + escapeHtml(p.kind || "Drinking water") + " · " + waterBadges(p).join(" ") + "</p>" +
+        (p.amenity === "water_point"
+          ? '<p class="popup-note">Mainly for filling boat or caravan tanks, so expect a plain tap, sometimes with a hose, rather than a drinking fountain.</p>'
+          : "") +
         hoursBlock(p) +
         "<p>" + escapeHtml(accessLabel(p.access)) + "</p>" +
         (bottle ? "<p>" + escapeHtml(bottle) + "</p>" : "") +
