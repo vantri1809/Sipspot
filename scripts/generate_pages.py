@@ -328,7 +328,9 @@ def city_grid(cities, heading="Browse by city", depth: int = 0) -> str:
     for c in cities:
         osm_n = c["osm_count"]
         label = f"{osm_n} OSM point" + ("" if osm_n == 1 else "s")
-        if c.get("partner_count"):
+        if c.get("launch_town") and not osm_n and not c.get("partner_count"):
+            label = "New: list your venue"
+        elif c.get("partner_count"):
             label += f", {c['partner_count']} partner" + ("" if c["partner_count"] == 1 else "s")
         items.append(
             f'<a href="{site_href(c["slug"] + "/", depth)}"><strong>{escape(c["name"])}</strong><span>{escape(label)}</span></a>'
@@ -411,7 +413,7 @@ def faq_jsonld(city_name: str, osm_count: int) -> str:
         ),
         (
             "How often is the map updated?",
-            "OpenStreetMap points are refreshed weekly from the Overpass API. Each popup shows the date the point was last edited on OpenStreetMap. Partner listings show the date they were last verified.",
+            "OpenStreetMap points are refreshed regularly from the OpenStreetMap database. Each popup shows the date the point was last edited on OpenStreetMap. Partner listings show the date they were last verified.",
         ),
         (
             "What if a point is wrong?",
@@ -631,7 +633,21 @@ def page_city(cfg, city, osm_feats, partner_feats, all_cities=None) -> str:
         n = city["partner_count"]
         partner_note = f" There {'is' if n == 1 else 'are'} also {n} partner refill point{'s' if n != 1 else ''} in this area, listed by the venue{'s' if n != 1 else ''} and shown separately."
     intros = city_intro_paragraphs(city, all_cities or [])
-    if intros:
+    is_empty = not city["osm_count"] and not city.get("partner_count")
+    if is_empty:
+        desc = (
+            f"{cfg.get('tagline') or 'Find it. Fill it. Go.'} "
+            f"Free water refill points in {name}. Run a café, shop, gym or pub? List your free tap."
+        )
+        list_href = site_href("list-your-business/", depth)
+        intro_html = (
+            f'<p class="lede">SipSpot is starting in {escape(name)}, and the map here is just getting going.</p>'
+            f"<p>Run a café, shop, gym or pub in {escape(name)}? "
+            f'<a href="{list_href}">List your free tap or water cooler</a>. It costs nothing, '
+            "and you get a window sticker so people know they can come in.</p>"
+            f'<p>Until then, the <a href="{site_href("", depth)}">UK map</a> shows the nearest points outside the area.</p>'
+        )
+    elif intros:
         first, *rest = intros
         intro_html = f'<p class="lede">{escape(first)}</p>' + "".join(f"<p>{escape(p)}</p>" for p in rest)
         if partner_note:
@@ -901,7 +917,11 @@ def choose_cities(places, osm_features, partner_features):
     by_pop = sorted(ranked, key=lambda c: c.get("population") or 0, reverse=True)
     top30 = by_pop[:30]
     chosen_slugs = {c["slug"] for c in top30}
-    extras = [c for c in ranked if c["slug"] not in chosen_slugs and c["osm_count"] >= 10]
+    # always_include: launch towns get a page even before they have any points.
+    extras = [
+        c for c in ranked
+        if c["slug"] not in chosen_slugs and (c["osm_count"] >= 10 or c.get("always_include"))
+    ]
     extras.sort(key=lambda c: (-c["osm_count"], c["name"]))
     chosen = top30 + extras
     chosen.sort(key=lambda c: c["name"])
@@ -969,7 +989,10 @@ def main() -> int:
 
     cities = choose_cities(places, osm, partners)
     cities, redirects = apply_city_merges(cities)
-    public_cities = [{k: v for k, v in c.items() if not k.startswith("_")} for c in cities]
+    public_cities = [
+        {k: v for k, v in c.items() if not k.startswith("_") and k != "always_include"}
+        for c in cities
+    ]
     write(ROOT / "data" / "cities.json", json.dumps(public_cities, ensure_ascii=False, indent=2))
 
     write(ROOT / "index.html", page_index(cfg, public_cities))

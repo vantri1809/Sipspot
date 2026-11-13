@@ -853,5 +853,16 @@
     "radius_km": 7,
     "population": 129794,
     "zoom": 12
+  },
+  {
+    "slug": "lichfield",
+    "name": "Lichfield",
+    "lat": 52.6816,
+    "lon": -1.8262,
+    "radius_km": 4,
+    "population": 34700,
+    "zoom": 14,
+    "always_include": true,
+    "launch_town": true
   }
 ]
